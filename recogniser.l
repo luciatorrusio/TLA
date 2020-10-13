@@ -1,0 +1,32 @@
+
+%{
+#include<stdio.h>
+int rotate = 0;
+int load = 0;
+#define ROTATE 0
+#define LOAD 1
+#define FINISH 2
+%}
+%%
+rotate {rotate++; return ROTATE; }
+load {load++; return LOAD; }
+return {return FINISH;}
+.	;
+%%
+
+int yywrap()
+{
+return 1;
+}
+
+int main(int argc, char **argv)
+{
+int ret = 0;
+ret = yylex();
+while(ret != FINISH) {
+	printf("we have load:%d and rotate:%d", load, rotate);
+	ret = yylex();
+ }
+
+return 0;
+}
