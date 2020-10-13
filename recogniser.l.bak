@@ -3,15 +3,26 @@
 #include<stdio.h>
 int rotate = 0;
 int load = 0;
+char* arg;
 #define ROTATE 0
 #define LOAD 1
 #define FINISH 2
+#define ARGUMENT 3
+#define END 4
+#define MIRROR 5
+#define COLLAGE 6
+#define INVERTCOLOR 7
 %}
 %%
-rotate {return ROTATE; }
-load {return LOAD; }
-return {return FINISH;}
-.	;
+rotate  {rotate++; return ROTATE; }
+load    {load++; return LOAD; }
+return  {return FINISH;}
+mirror  {return MIRROR;}
+collage {return COLLAGE;}
+invertColor    {return INVERTCOLOR;}
+[(][\[\]/a-zA-Z0-9\\ \.,\"]*[)]	{arg = yytext; return ARGUMENT;}
+;           {return END;}
+.	    ;
 %%
 
 int yywrap()
@@ -21,12 +32,27 @@ return 1;
 
 int main(int argc, char **argv)
 {
-int ret = 0;
-ret = yylex();
-while(ret != FINISH) {
-	printf("we have load:%d and rotate:%d", load, rotate);
-	ret = yylex();
- }
+    if(argc > 0)
+        yyin = fopen(argv[1], "r");
+    else
+            yyin = stdin;
+    int ret = 0;
+    ret = yylex();
+    while(ret != FINISH) {
+        if(ret == ARGUMENT)
+            printf("argument: %s\n", arg);
+        if(ret == ROTATE)
+            printf("rotate");
+        if(ret == LOAD)
+            printf("load");
+        if(ret == MIRROR)
+            printf("mirror");
+        if(ret == INVERTCOLOR)
+            printf("invertcolor");
+        if(ret == COLLAGE)
+            printf("collage");
+        ret = yylex();
+    }
 
-return 0;
+    return 0;
 }

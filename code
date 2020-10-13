@@ -1,0 +1,9 @@
+img image = load ("./datos/seg/img.png");
+rotate(image, 90) ;
+mirror(image, x);
+mirror(image, y);
+invertColors(image);
+img image2 = load("./datos/seg/img2.png");
+img collage = collage([image, image2]);
+image collage2 = collage([[image, image2]]);
+return;
