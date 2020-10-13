@@ -14,12 +14,12 @@ char* arg;
 #define INVERTCOLOR 7
 %}
 %%
-rotate  {rotate++; return ROTATE; }
-load    {load++; return LOAD; }
-return  {return FINISH;}
-mirror  {return MIRROR;}
-collage {return COLLAGE;}
-invertColor    {return INVERTCOLOR;}
+rotate[ \t]*[(]  {rotate++; yyless(1);return ROTATE; }
+load[ \t]*[(]   {load++; yyless(1);return LOAD; }
+return[ \t]*[(]  {yyless(1);return FINISH;}
+mirror[ \t]*[(]  {yyless(1);return MIRROR;}
+collage[ \t]*[(] {yyless(1);return COLLAGE;}
+invertColor    {yyless(1);return INVERTCOLOR;}
 [(][\[\]/a-zA-Z0-9\\ \.,\"]*[)]	{arg = yytext; return ARGUMENT;}
 ;           {return END;}
 .	    ;
@@ -42,15 +42,15 @@ int main(int argc, char **argv)
         if(ret == ARGUMENT)
             printf("argument: %s\n", arg);
         if(ret == ROTATE)
-            printf("rotate");
+            printf("rotate ");
         if(ret == LOAD)
-            printf("load");
+            printf("load ");
         if(ret == MIRROR)
-            printf("mirror");
+            printf("mirror ");
         if(ret == INVERTCOLOR)
-            printf("invertcolor");
+            printf("invertcolor ");
         if(ret == COLLAGE)
-            printf("collage");
+            printf("collage ");
         ret = yylex();
     }
 

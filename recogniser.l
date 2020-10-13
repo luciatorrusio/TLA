@@ -14,12 +14,12 @@ char* arg;
 #define INVERTCOLOR 7
 %}
 %%
-rotate  {rotate++; return ROTATE; }
-load    {load++; return LOAD; }
+rotate[ \t]*[(]  {rotate++; yyless(1);return ROTATE; }
+load[ \t]*[(]   {load++; yyless(1);return LOAD; }
 return  {return FINISH;}
-mirror  {return MIRROR;}
-collage {return COLLAGE;}
-invertColor    {return INVERTCOLOR;}
+mirror[ \t]*[(]  {yyless(1);return MIRROR;}
+collage[ \t]*[(] {yyless(1);return COLLAGE;}
+invertColor    {yyless(1);return INVERTCOLOR;}
 [(][\[\]/a-zA-Z0-9\\ \.,\"]*[)]	{arg = yytext; return ARGUMENT;}
 ;           {return END;}
 .	    ;
