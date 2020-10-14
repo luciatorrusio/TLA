@@ -3,6 +3,7 @@
 #include<stdio.h>
 int rotate = 0;
 int load = 0;
+int num = 0;
 char* arg;
 #define ROTATE 0
 #define LOAD 1
@@ -12,17 +13,25 @@ char* arg;
 #define MIRROR 5
 #define COLLAGE 6
 #define INVERTCOLOR 7
+#define ERROR 8
 %}
+%x	ARG
+WORD	[A-Za-z]
+DIGIT [0-9]
 %%
-rotate[ \t]*[(]  {rotate++; yyless(1);return ROTATE; }
-load[ \t]*[(]   {load++; yyless(1);return LOAD; }
-return  {return FINISH;}
-mirror[ \t]*[(]  {yyless(1);return MIRROR;}
-collage[ \t]*[(] {yyless(1);return COLLAGE;}
-invertColor    {yyless(1);return INVERTCOLOR;}
-[(][\[\]/a-zA-Z0-9\\ \.,\"]*[)]	{arg = yytext; return ARGUMENT;}
-;           {return END;}
-.	    ;
+<INITIAL>rotate[ \t]*[(]  {BEGIN(ARG); return ROTATE; }
+<INITIAL>load[ \t]*[(]   {BEGIN(ARG);return LOAD; }
+<INITIAL>mirror[ \t]*[(]  {BEGIN(ARG);return MIRROR;}
+<INITIAL>collage[ \t]*[(] {BEGIN(ARG);return COLLAGE;}
+<INITIAL>invertColor[ \t]*[(]    {BEGIN(ARG);return INVERTCOLOR;}
+<ARG>[0-9A-Za-z/\.]+	{arg = yytext; return ARGUMENT;}
+<ARG>,			{num++;}
+<ARG>[)] {num = 0;BEGIN(INITIAL);}
+<INITIAL>;           {return END;}
+<INITIAL>.	    ;
+<ARG>\n      {return ERROR;}
+<ARG>.	;
+<INITIAL>return  {return FINISH;}
 %%
 
 int yywrap()
@@ -38,9 +47,9 @@ int main(int argc, char **argv)
             yyin = stdin;
     int ret = 0;
     ret = yylex();
-    while(ret != FINISH) {
+    while(ret != FINISH && ret !=ERROR) {
         if(ret == ARGUMENT)
-            printf("argument: %s\n", arg);
+            printf("argument %d: %s\n", num, arg);
         if(ret == ROTATE)
             printf("rotate ");
         if(ret == LOAD)
@@ -51,8 +60,11 @@ int main(int argc, char **argv)
             printf("invertcolor ");
         if(ret == COLLAGE)
             printf("collage ");
+	
         ret = yylex();
     }
+    if(ret == ERROR)
+            printf("there has been an error ");
 
     return 0;
 }
