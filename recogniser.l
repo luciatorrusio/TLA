@@ -13,6 +13,7 @@ enum FUNCTIONS{ROTATE, LOAD, MIRROR, COLLAGE, INVERTCOLOR};
 %}
 %x	ARG
 %x COMMENT
+%x COMMENTBIG
 WORD	[A-Za-z]
 DIGIT [0-9]
 %%
@@ -27,6 +28,8 @@ DIGIT [0-9]
 <INITIAL>;           {return END;}
 <INITIAL>.	    ;
 <INITIAL>\\\\   {BEGIN(COMMENT);}
+<INITIAL>\\\*   {BEGIN(COMMENTBIG);}
+<COMMENTBIG>\*\\    {BEGIN(INITIAL);}
 <COMMENT>\n     {BEGIN(INITIAL);}
 <COMMENT>.      ;
 <ARG>\n      {return ERROR;}
