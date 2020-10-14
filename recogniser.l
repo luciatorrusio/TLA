@@ -12,6 +12,7 @@ enum FUNCTIONS{ROTATE, LOAD, MIRROR, COLLAGE, INVERTCOLOR};
 #define ERROR 800
 %}
 %x	ARG
+%x COMMENT
 WORD	[A-Za-z]
 DIGIT [0-9]
 %%
@@ -25,6 +26,9 @@ DIGIT [0-9]
 <ARG>[)] {num = 0;BEGIN(INITIAL);}
 <INITIAL>;           {return END;}
 <INITIAL>.	    ;
+<INITIAL>\\\\   {BEGIN(COMMENT);}
+<COMMENT>\n     {BEGIN(INITIAL);}
+<COMMENT>.      ;
 <ARG>\n      {return ERROR;}
 <ARG>.	;
 <INITIAL>return  {return FINISH;}
