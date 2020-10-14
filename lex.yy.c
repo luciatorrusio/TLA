@@ -409,18 +409,14 @@ int rotate = 0;
 int load = 0;
 int num = 0;
 char* arg;
-#define ROTATE 0
-#define LOAD 1
-#define FINISH 2
-#define ARGUMENT 3
-#define END 4
-#define MIRROR 5
-#define COLLAGE 6
-#define INVERTCOLOR 7
-#define ERROR 8
+enum FUNCTIONS{ROTATE, LOAD, MIRROR, COLLAGE, INVERTCOLOR};
+#define FINISH 200
+#define ARGUMENT 300
+#define END 400
+#define ERROR 800
 #define ARG 1
 
-#line 424 "lex.yy.c"
+#line 420 "lex.yy.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -571,9 +567,9 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 21 "recogniser.l"
+#line 17 "recogniser.l"
 
-#line 577 "lex.yy.c"
+#line 573 "lex.yy.c"
 
 	if ( yy_init )
 		{
@@ -658,75 +654,75 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 22 "recogniser.l"
+#line 18 "recogniser.l"
 {BEGIN(ARG); return ROTATE; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 23 "recogniser.l"
+#line 19 "recogniser.l"
 {BEGIN(ARG);return LOAD; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 24 "recogniser.l"
+#line 20 "recogniser.l"
 {BEGIN(ARG);return MIRROR;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 25 "recogniser.l"
+#line 21 "recogniser.l"
 {BEGIN(ARG);return COLLAGE;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 26 "recogniser.l"
+#line 22 "recogniser.l"
 {BEGIN(ARG);return INVERTCOLOR;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 27 "recogniser.l"
+#line 23 "recogniser.l"
 {arg = yytext; return ARGUMENT;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 28 "recogniser.l"
+#line 24 "recogniser.l"
 {num++;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 29 "recogniser.l"
+#line 25 "recogniser.l"
 {num = 0;BEGIN(INITIAL);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 30 "recogniser.l"
+#line 26 "recogniser.l"
 {return END;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 31 "recogniser.l"
+#line 27 "recogniser.l"
 ;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 32 "recogniser.l"
+#line 28 "recogniser.l"
 {return ERROR;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 33 "recogniser.l"
+#line 29 "recogniser.l"
 ;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 34 "recogniser.l"
+#line 30 "recogniser.l"
 {return FINISH;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 35 "recogniser.l"
+#line 31 "recogniser.l"
 ECHO;
 	YY_BREAK
-#line 730 "lex.yy.c"
+#line 726 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(ARG):
 	yyterminate();
@@ -1613,7 +1609,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 35 "recogniser.l"
+#line 31 "recogniser.l"
 
 
 int yywrap()

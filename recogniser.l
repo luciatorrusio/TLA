@@ -5,15 +5,11 @@ int rotate = 0;
 int load = 0;
 int num = 0;
 char* arg;
-#define ROTATE 0
-#define LOAD 1
-#define FINISH 2
-#define ARGUMENT 3
-#define END 4
-#define MIRROR 5
-#define COLLAGE 6
-#define INVERTCOLOR 7
-#define ERROR 8
+enum FUNCTIONS{ROTATE, LOAD, MIRROR, COLLAGE, INVERTCOLOR};
+#define FINISH 200
+#define ARGUMENT 300
+#define END 400
+#define ERROR 800
 %}
 %x	ARG
 WORD	[A-Za-z]

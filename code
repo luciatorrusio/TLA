@@ -1,6 +1,5 @@
 img image = load ("./datos/seg/img.png");
 rotate(image, 90) ;
-rotate (wrong argument
 mirror(image, x);
 mirror(image, y);
 invertColors(image);
