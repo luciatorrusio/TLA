@@ -11,12 +11,15 @@ enum FUNCTIONS{ROTATE, LOAD, MIRROR, COLLAGE, INVERTCOLOR};
 #define END 400
 #define ERROR 800
 %}
+
 %x	ARG
 %x COMMENT
 %x COMMENTBIG
-WORD	[A-Za-z]
-DIGIT [0-9]
+WORD    [A-Za-z]
+DIGIT   [0-9]
+
 %%
+
 <INITIAL>rotate[ \t]*[(]  {BEGIN(ARG); return ROTATE; }
 <INITIAL>load[ \t]*[(]   {BEGIN(ARG);return LOAD; }
 <INITIAL>mirror[ \t]*[(]  {BEGIN(ARG);return MIRROR;}
@@ -27,14 +30,15 @@ DIGIT [0-9]
 <ARG>[)] {num = 0;BEGIN(INITIAL);}
 <INITIAL>;           {return END;}
 <INITIAL>.	    ;
-<INITIAL>\\\\   {BEGIN(COMMENT);}
-<INITIAL>\\\*   {BEGIN(COMMENTBIG);}
-<COMMENTBIG>\*\\    {BEGIN(INITIAL);}
+<INITIAL>\/\/   {BEGIN(COMMENT);}
+<INITIAL>\/\*   {BEGIN(COMMENTBIG);}
+<COMMENTBIG>\*\/    {BEGIN(INITIAL);}
 <COMMENT>\n     {BEGIN(INITIAL);}
 <COMMENT>.      ;
 <ARG>\n      {return ERROR;}
 <ARG>.	;
 <INITIAL>return  {return FINISH;}
+
 %%
 
 int yywrap()

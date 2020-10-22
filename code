@@ -1,8 +1,8 @@
 img image = load ("./datos/seg/img.png");
 rotate(image, 90) ;
-\\THIS IS A COMMENT rotate(imageejej)
-\\rotate ((
- kjnkljnkjn *\
+//THIS IS A COMMENT rotate(imageejej)
+//rotate ((
+/* kjnkljnkjn */
 mirror(image, y);
 invertColors(image);
 img image2 = load("./datos/seg/img2.png");
