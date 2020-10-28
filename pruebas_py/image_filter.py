@@ -3,8 +3,7 @@ import cv2
 from matplotlib import pyplot as plt
 from PIL import Image, ImageFilter
 
-def image_filter(image_path):
-    image = cv2.imread(image_path) # reads the image
+def image_filter(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert to HSV
     figure_size = 9 # the dimension of the x and y axis of the kernal.
     new_image = cv2.blur(image,(figure_size, figure_size))
