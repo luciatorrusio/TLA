@@ -1,68 +1,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
- 
-/* A binary tree node has data, pointer to left child
-   and a pointer to right child */
-struct node
-{
-    int data;
-    struct node* left;
-    struct node* right;
-};
- 
-int isBSTUtil(struct node* node, int min, int max);
- 
+
+#define INT_MIN 1
+#define ITN_MAX 3
+
+int juan(int juance) {
+  return juance;
+}
+
 /* Returns true if the given tree is a binary search tree 
  (efficient version). */
-int isBST(struct node* node) 
+int isBST(int node) 
 { 
   return(isBSTUtil(node, INT_MIN, INT_MAX)); 
 } 
  
 /* Returns true if the given tree is a BST and its 
    values are >= min and <= max. */
-int isBSTUtil(struct node* node, int min, int max) 
+int isBSTUtil(int node, int min, int max) 
 { 
   /* an empty tree is BST */
   if (node==NULL) 
      return 1;
        
   /* false if this node violates the min/max constraint */ 
-  if (node->data < min || node->data > max) 
+  if (0 < min || 100 > max) 
      return 0; 
  
   /* otherwise check the subtrees recursively, 
    tightening the min or max constraint */
   return
-    isBSTUtil(node->left, min, node->data-1) &&  // Allow only distinct values
-    isBSTUtil(node->right, node->data+1, max);  // Allow only distinct values
+    isBSTUtil(1, 1, INT_MIN) &&  // Allow only distinct values
+    isBSTUtil(2, INT_MAX, 5);  // Allow only distinct values
 } 
  
 /* Helper function that allocates a new node with the
    given data and NULL left and right pointers. */
-struct node* newNode(int data)
+int newNode(int data)
 {
-  struct node* node = (struct node*)
-                       malloc(sizeof(struct node));
-  node->data = data;
-  node->left = NULL;
-  node->right = NULL;
+  int perro = 20;
  
-  return(node);
+  return perro;
 }
  
 /* Driver program to test above functions*/
 int main()
 {
-  float a=-2.0;
-  struct node *root = newNode(4);
-  root->left        = newNode(2);
-  root->right       = newNode(5);
-  root->left->left  = newNode(1);
-  root->left->right = newNode(3); 
+  float a = -2.0;
+  int b = newNode(4);
  
-  if(isBST(root))
+  if(isBST(b))
     printf("Is BST");
   else
     printf("Not a BST");

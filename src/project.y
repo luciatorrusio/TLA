@@ -1,19 +1,34 @@
 %{
 	#include<stdio.h>
+	#include<errno.h>
+
 	int yylex(void);
 	int yyerror(const char *s);
+
+	FILE * fp = NULL;
+
+	int pyhead(const char * headToWrite) {
+		// TODO: Write at the beggining of file
+		fputs(headToWrite, fp);
+	}
+
+	int pybody(const char * bodyToWrite) {
+		fputs(bodyToWrite, fp);
+	}
+
 	int success = 1;
 %}
 
-%token int_const char_const float_const id string enumeration_const storage_const type_const qual_const struct_const enum_const DEFINE
-%token IF FOR DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT GOTO SIZEOF PUNC or_const and_const eq_const shift_const rel_const inc_const
-%token point_const param_const ELSE HEADER
+%token int_const float_const id string type_const DEFINE
+%token IF FOR DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC or_const and_const eq_const shift_const rel_const inc_const
+%token param_const ELSE HEADER
 %left '+' '-'
 %left '*' '/'
-%nonassoc "then"
+%nonassoc THEN
 %nonassoc ELSE
-%define parse.error verbose
+//%define parse.error verbose
 %start program_unit
+
 %%
 program_unit				: HEADER program_unit                               
 							| DEFINE primary_exp program_unit                 	
@@ -25,41 +40,13 @@ translation_unit			: external_decl
 external_decl				: function_definition
 							| decl
 							;
-function_definition			: decl_specs declarator decl_list compound_stat 	
-							| declarator decl_list compound_stat
-							| decl_specs declarator	compound_stat 				
-							| declarator compound_stat
+function_definition			: type_const id declarator compound_stat 				
 							;
-decl						: decl_specs init_declarator_list ';' 				
-							| decl_specs ';'
+decl						: type_const init_declarator_list ';' 				
+							| type_const ';'
 							;
 decl_list					: decl
 							| decl_list decl
-							;
-decl_specs					: storage_class_spec decl_specs
-							| storage_class_spec
-							| type_spec decl_specs								
-							| type_spec 										
-							| type_qualifier decl_specs
-							| type_qualifier
-							;
-storage_class_spec			: storage_const
-							;
-type_spec					: type_const										
-							| struct_or_union_spec
-							| enum_spec
-							| typedef_name
-							;
-type_qualifier				: qual_const
-							;
-struct_or_union_spec		: struct_or_union id '{' struct_decl_list '}'
-							| struct_or_union '{' struct_decl_list '}'
-							| struct_or_union id
-							;
-struct_or_union				: struct_const
-							;
-struct_decl_list			: struct_decl
-							| struct_decl_list struct_decl
 							;
 init_declarator_list		: init_declarator
 							| init_declarator_list ',' init_declarator
@@ -67,48 +54,18 @@ init_declarator_list		: init_declarator
 init_declarator				: declarator
 							| declarator '=' initializer
 							;
-struct_decl					: spec_qualifier_list struct_declarator_list ';'
+spec_qualifier_list			: type_const spec_qualifier_list
+							| type_const
 							;
-spec_qualifier_list			: type_spec spec_qualifier_list
-							| type_spec
-							| type_qualifier spec_qualifier_list
-							| type_qualifier
+declarator					: '(' param_type_list ')'
+							| '(' ')'
 							;
-struct_declarator_list		: struct_declarator
-							| struct_declarator_list ',' struct_declarator
-							;
-struct_declarator			: declarator
-							| declarator ':' const_exp
-							| ':' const_exp
-							;
-enum_spec					: enum_const id '{' enumerator_list '}'
-							| enum_const '{' enumerator_list '}'
-							| enum_const id
-							;
-enumerator_list				: enumerator
-							| enumerator_list ',' enumerator
-							;
-enumerator					: id
-							| id '=' const_exp
-							;
-declarator					: pointer direct_declarator
-							| direct_declarator
-							;
-direct_declarator			: id 												
-							| '(' declarator ')'									
+direct_declarator			: id 																				
 							| direct_declarator '[' const_exp ']'							
 							| direct_declarator '['	']'
 							| direct_declarator '(' param_type_list ')' 			
 							| direct_declarator '(' id_list ')' 					
 							| direct_declarator '('	')' 							
-							;
-pointer						: '*' type_qualifier_list
-							| '*'
-							| '*' type_qualifier_list pointer
-							| '*' pointer
-							;
-type_qualifier_list			: type_qualifier
-							| type_qualifier_list type_qualifier
 							;
 param_type_list				: param_list
 							| param_list ',' param_const
@@ -116,9 +73,9 @@ param_type_list				: param_list
 param_list					: param_decl
 							| param_list ',' param_decl
 							;
-param_decl					: decl_specs declarator
-							| decl_specs abstract_declarator
-							| decl_specs
+param_decl					: type_const direct_declarator
+							| type_const abstract_declarator
+							| type_const
 							;
 id_list						: id
 							| id_list ',' id
@@ -133,9 +90,7 @@ initializer_list			: initializer
 type_name					: spec_qualifier_list abstract_declarator
 							| spec_qualifier_list
 							;
-abstract_declarator			: pointer
-							| pointer direct_abstract_declarator
-							|	direct_abstract_declarator
+abstract_declarator			: direct_abstract_declarator
 							;
 direct_abstract_declarator	: '(' abstract_declarator ')'
 							| direct_abstract_declarator '[' const_exp ']'
@@ -146,8 +101,6 @@ direct_abstract_declarator	: '(' abstract_declarator ')'
 							| '(' param_type_list ')'
 							| direct_abstract_declarator '(' ')'
 							| '(' ')'
-							;
-typedef_name				: 't'
 							;
 stat						: labeled_stat 									      	
 							| exp_stat 											  	
@@ -171,7 +124,7 @@ compound_stat				: '{' decl_list stat_list '}'
 stat_list					: stat     												
 							| stat_list stat  										
 							;
-selection_stat				: IF '(' exp ')' stat 									%prec "then"
+selection_stat				: IF '(' exp ')' stat 									%prec THEN
 							| IF '(' exp ')' stat ELSE stat
 							| SWITCH '(' exp ')' stat
 							;
@@ -186,8 +139,7 @@ iteration_stat				: WHILE '(' exp ')' stat
 							| FOR '(' ';' ';' exp ')' stat
 							| FOR '(' ';' ';' ')' stat
 							;
-jump_stat					: GOTO id ';'
-							| CONTINUE ';'
+jump_stat				: CONTINUE ';'
 							| BREAK ';'
 							| RETURN exp ';'
 							| RETURN ';'
@@ -247,8 +199,6 @@ cast_exp					: unary_exp
 unary_exp					: postfix_exp
 							| inc_const unary_exp
 							| unary_operator cast_exp
-							| SIZEOF unary_exp
-							| SIZEOF '(' type_name ')'
 							;
 unary_operator				: '&' | '*' | '+' | '-' | '~' | '!' 				
 							;
@@ -257,7 +207,6 @@ postfix_exp					: primary_exp
 							| postfix_exp '(' argument_exp_list ')'
 							| postfix_exp '(' ')'
 							| postfix_exp '.' id
-							| postfix_exp point_const id
 							| postfix_exp inc_const
 							;
 primary_exp					: id 													
@@ -269,17 +218,26 @@ argument_exp_list			: assignment_exp
 							| argument_exp_list ',' assignment_exp
 							;
 consts						: int_const 											
-							| char_const
 							| float_const
-							| enumeration_const
 							;
 %%
 
 int main()
 {
+		fp = fopen("translated.py", "w");
+		if (fp == NULL) {
+			perror("fopen");
+		}
+
     yyparse();
     if(success)
     	printf("Parsing Successful\n");
+
+
+		if (fclose(fp) < 0) {
+			perror("fclose");
+		}
+
     return 0;
 }
 
