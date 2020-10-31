@@ -30,9 +30,9 @@
 %start program_unit
 
 %%
-program_unit				: HEADER program_unit                               
-							| DEFINE primary_exp program_unit                 	
-							| translation_unit									
+program_unit				: HEADER program_unit           { pybody("# Headers\n\n"); }                    
+							| DEFINE primary_exp program_unit     { pybody("# Defines\n\n"); }            	
+							| translation_unit										{ pybody("# Code\n\n"); }
 							;
 translation_unit			: external_decl 									
 							| translation_unit external_decl					
@@ -40,10 +40,10 @@ translation_unit			: external_decl
 external_decl				: function_definition
 							| decl
 							;
-function_definition			: type_const id declarator compound_stat 				
+function_definition			: type_const id function_declarator compound_stat 	{ pybody("# Function definition\n\n"); }			
 							;
 decl						: type_const init_declarator_list ';' 				
-							| type_const ';'
+							| type_const ';' 
 							;
 decl_list					: decl
 							| decl_list decl
@@ -51,13 +51,13 @@ decl_list					: decl
 init_declarator_list		: init_declarator
 							| init_declarator_list ',' init_declarator
 							;
-init_declarator				: declarator
-							| declarator '=' initializer
+init_declarator				: direct_declarator
+							| direct_declarator '=' initializer
 							;
 spec_qualifier_list			: type_const spec_qualifier_list
 							| type_const
 							;
-declarator					: '(' param_type_list ')'
+function_declarator			: '(' param_type_list ')'
 							| '(' ')'
 							;
 direct_declarator			: id 																				
@@ -94,7 +94,7 @@ abstract_declarator			: direct_abstract_declarator
 							;
 direct_abstract_declarator	: '(' abstract_declarator ')'
 							| direct_abstract_declarator '[' const_exp ']'
-							| '[' const_exp ']'
+							// | '[' const_exp ']'
 							| direct_abstract_declarator '[' ']'
 							| '[' ']'
 							| direct_abstract_declarator '(' param_type_list ')'

@@ -37,10 +37,12 @@ int isBSTUtil(int node, int min, int max)
  
 /* Helper function that allocates a new node with the
    given data and NULL left and right pointers. */
-int newNode(int data)
+
+// usar arroba para pasar funciones por argumento ???
+int newNode() 
 {
-  int perro = 20;
- 
+  int hola[hola] = {2, 4};
+  newNode();
   return perro;
 }
  
