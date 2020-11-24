@@ -5,7 +5,11 @@ typedef enum { typeCon, typeStr, typeId, typeOpr, typeTyp } nodeEnum;
 
 typedef enum { voidTyp, intTyp, stringTyp, floatTyp } cTyp;
 
-typedef enum {TRANS_UNIT, FUNC_DEF, FUNC_DEC, COMP_STAT, STAT_LIST, RET, POST_EXP, ARG_EXP_LIST, HEAD, p, PROG} oper_types; 
+typedef enum {TRANS_UNIT, FUNC_DEF, FUNC_DEC, COMP_STAT, 
+              STAT_LIST, RET, POST_EXP, ARG_EXP_LIST, HEAD, 
+              PROG, EXP_STAT, DECL_LIST, DECL, INIT_DECL, INIT_DECL_LIST, 
+              DIR_DECL_E, DIR_DECL_L, DIR_DECL, PARAM_LIST, DIR_DECL_ARR, 
+              INIT_LIST } oper_types; 
 
 #define STRING_MAX_SIZE 256
 
