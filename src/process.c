@@ -16,12 +16,15 @@ static void printParams(nodeType * t);
 static void translate_argument_exp_list(nodeType * t);
 static void translate_primary_exp(nodeType * t);
 static void translate_postfix_exp(nodeType * t);
+static void translate_const_exp(nodeTyp *t);
 static void translate_assignment_exp(nodeType * t);
 static void translate_exp(nodeType * t);
 static void translate_exp_stat(nodeType *t);
 static void translate_jump_stat(nodeType *t);
 static void translate_stat(nodeType *t);
 static void translate_stat_list(nodeType * t);
+static void translate_decl(nodeType * t);
+static void translate_decl_list(nodeType * t);
 static void translate_compound_stat(nodeType * t);
 static void translate_function_definition(nodeType * t);
 static void translate_external_decl(nodeType * t);
@@ -30,6 +33,7 @@ static void translate_prog(nodeType * t);
 static void translateToPython(nodeType * t);
 static void checkLibraries(nodeType * t);
 static void checkTypes(nodeType * t, bool * checked);
+static void translate_direct_declarator(nodeType * t);
 
 char indent[MAX_INDENTATION_LEVEL];
 int indentLevel = 0;
@@ -186,10 +190,16 @@ static void translate_postfix_exp(nodeType * t) {
 	}
 }
 
+static void translate_const_exp(nodeTyp *t) {
+	printf("FOUND const_exp\n");
+
+	translate_postfix_exp(t);
+}
+
 static void translate_assignment_exp(nodeType *t) {
 	printf("FOUND assignment_exp\n");
 
-	translate_postfix_exp(t);
+	translate_const_exp(t);
 }
 
 static void translate_exp(nodeType *t){
@@ -257,10 +267,102 @@ static void translate_stat_list(nodeType * t){
 	pybody("\n");
 }
 
+static void translate_decl(nodeType *t){
+	printf("FOUND decl\n");
+	
+  if (t->type = typeOpr && t->opr.nops == 1) {
+		nodeType * stat = t->opr.op[0];
+		switch(t->opr.oper) {
+			case EXP_STAT:
+					translate_exp_stat(stat);
+				break;
+			case COMP_STAT:
+					translate_compound_stat(stat);
+				break;
+			case JUMP_STAT:
+					translate_jump_stat(stat);
+				break;
+		}
+	}
+}
+
+static void translate_direct_declarator(nodeType * t) {
+	printf("FOUND direct_declarator\n");
+	
+	pybody_ind("%s", t->ide.i);
+	if(t->type == typeOpr) {
+		switch (t->opr.oper)
+		{
+		case DIR_DECL_E:
+			pybody("[");
+			translate_const_exp(t);
+			pybody("]");
+			break;
+
+		case DIR_DECL_ARR:
+			pybody("[]");
+			break;
+
+		case DIR_DECL_L:
+			break;
+		
+		case DIR_DECL:
+			break;
+		}
+	}
+}
+
+static void translate_initializer(nodeType * t) {
+	printf("FOUND initializer\n");
+
+	if (t->type == typeOpr && t->opr.oper == INIT_LIST && t->opr.nops == 1) {
+		
+	}
+	else {
+		translate_assignment_exp(t);
+	}
+}
+
+static void translate_init_declarator(nodeType * t){
+	printf("FOUND init_declarator\n");
+
+	if (t->type == typeOpr && t->opr.oper == INIT_DECL && t->opr.nops == 2) {
+		nodeType * directDecl = t->opr.op[0];
+		nodeType * initializer = t->opr.op[1];
+
+		translate_direct_declarator(directDecl);
+		
+		if (initializer != NULL) {
+			pybody(" = ");
+			translate_initializer(initializer);
+		}
+	}
+}
+
+static void translate_decl_list(nodeType * t){
+	printf("FOUND decl_list\n");
+
+	if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
+		translate_init_declarator(t->opr.op[1]);
+	}
+	pybody("\n");
+}
+
 static void translate_compound_stat(nodeType * t) {
 	printf("FOUND compound_stat\n");
 
-	translate_stat_list(t);
+	if (t->type == typeOpr && t->opr.oper == COMP_STAT && t->opr.nops == 2) {
+		nodeType * decl_list = t->opr.op[0];
+		nodeType * stat_list = t->opr.op[1]; 
+
+		if (decl_list != NULL) {
+			translate_decl_list(decl_list);
+		}
+		if (stat_list != NULL) {
+			translate_stat_list(stat_list);
+		}
+	}
+
 }
 
 static void translate_function_definition(nodeType * t) {

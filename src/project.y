@@ -53,7 +53,7 @@
 %type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list assignment_exp conditional_exp const_exp 
 %type <nPtr> logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp 
 %type <nPtr> shift_expression additive_exp mult_exp cast_exp unary_exp postfix_exp primary_exp argument_exp_list
-%type <nPtr> decl decl_list init_declarator_list init_declarator direct_declarator param_list initializer
+%type <nPtr> decl decl_list init_declarator direct_declarator param_list initializer
 %type <nPtr> initializer_list
 
 %start program
@@ -70,20 +70,17 @@ external_decl				: function_definition						{$$ = opr(EXT_DECL, 1, $1);}
 							;
 function_definition			: type_const id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, typ($1), ide($2), $3, $4); }			
 							;
-decl						: type_const init_declarator_list ';'  {$$ = opr(DECL, 2, typ($1), $2);}
+decl						: type_const init_declarator ';'  {$$ = opr(DECL, 2, typ($1), $2);}
 							;
 decl_list					: decl														{$$ = $1;}
 							| decl_list decl											{$$ = opr(DECL_LIST, 2, $1, $2);}
 							;
-init_declarator_list		: init_declarator	  	  		{$$ = $1;}
-							| init_declarator_list ',' init_declarator {$$ = opr(INIT_DECL_LIST, 2, $1, $3);}
-							;
-init_declarator				: direct_declarator						{$$ = opr(INIT_DECL, 1, $1);}
+init_declarator				: direct_declarator						{$$ = opr(INIT_DECL, 2, $1, NULL);}
 							| direct_declarator '=' initializer		{$$ = opr(INIT_DECL, 2, $1, $3);}
 							;
 
 direct_declarator			: id 													{$$ = ide($1);}						
-							| direct_declarator '[' const_exp ']'	{$$ = opr(DIR_DECL_E, 2, $1, $3);}		
+							| id '[' const_exp ']'								{$$ = opr(DIR_DECL_E, 2, $1, $3);}		
 							| id '[' ']'													{$$ = opr(DIR_DECL_ARR, 1, ide($1));}	
 							| id '(' param_list ')' 							{$$ = opr(DIR_DECL_L, 2, ide($1), $3);}
 							| id '('	')' 							  				{$$ = opr(DIR_DECL, 1, ide($1));}
@@ -98,7 +95,7 @@ initializer					: assignment_exp								{$$ = $1;}
 initializer_list			: initializer									{$$ = $1;}
 							| initializer_list ',' initializer		{$$ = opr(INIT_LIST, 2, $1, $3);}
 							;
-function_declarator	: '(' ')'															{$$ = opr(FUNC_DEC, 0);}
+function_declarator	: '(' ')'												{$$ = opr(FUNC_DEC, 0);}
 							;
 stat						: exp_stat 											  	{$$ = opr(EXP_STAT, 1, $1);}
 							| compound_stat 									  	{$$ = opr(COMP_STAT, 1, $1);}
@@ -106,17 +103,15 @@ stat						: exp_stat 											  	{$$ = opr(EXP_STAT, 1, $1);}
 							;
 exp_stat					: exp ';'													{$$ = $1;}
 							;
-compound_stat				: '{' stat_list '}'									 	{$$ = $2;}
-							;
-compound_stat				: '{' decl_list stat_list '}'   {$$ = opr(COMP_STAT, 2, $2, $3);}					
-							| '{' stat_list '}'										{$$ = opr(STAT_LIST, 1, $2);}
-							| '{' decl_list	'}'										{$$ = opr(DECL_LIST, 1, $2);}
-							| '{' '}'															{$$ = opr(COMP_STAT, 0);}
+compound_stat				:  '{' decl_list stat_list '}'  {$$ = opr(COMP_STAT, 2, $2, $3);}					
+							 | '{' stat_list '}'									{$$ = opr(COMP_STAT, 2, NULL, $2);}
+							 | '{' decl_list	'}'									{$$ = opr(COMP_STAT, 2, $2, NULL);}
+							 | '{' '}'														{$$ = opr(COMP_STAT, 0);}
 							;
 stat_list					: stat     												{$$ = $1;}
 							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
 							;
-jump_stat					: RETURN exp ';'											{$$ = opr(RET, 1, $2);}
+jump_stat					: RETURN exp ';'									{$$ = opr(RET, 1, $2);}
 							| RETURN ';'													{$$ = opr(RET, 0);}
 							;
 exp							: assignment_exp										{$$ = $1;}
