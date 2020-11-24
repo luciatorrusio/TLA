@@ -10,7 +10,10 @@
 %%
 "#include"([ ]+)?((<(\\.|[^>])+>)|(\"(\\.|[^"])+\"))			{return HEADER;}
 "#define"[ ]+[a-zA-z_][a-zA-z_0-9]* 											{return DEFINE;}
-"void"|"string"|"int"|"float"															{return type_const;}	
+"void"																										{yylval.cType = voidTyp; return type_const;}
+"string"																									{yylval.cType = stringTyp; return type_const;}
+"int"																											{yylval.cType = intTyp; return type_const;}
+"float"																										{yylval.cType = floatTyp; return type_const;}
 "case"																										{return CASE;}	
 "default"																									{return DEFAULT;}
 "if"																											{return IF;}
@@ -35,7 +38,7 @@
 [0-9]+																										{yylval.iValue = atoi(yytext); return int_const;}
 [0-9]+"."[0-9]+																						{return float_const;}	
 [a-zA-Z_][a-zA-Z_0-9]*			 															{return id;}
-\"(\\.|[^\"])*\"																					{return string;}
+\"(\\.|[^\"])*\"																					{strcpy(yylval.sArr, yytext); return string;}
 "//"(\\.|[^\n])*[\n]																			;
 [/][*]([^*]|[*]*[^*/])*[*]+[/]                            ;
 [ \t\n]																										;

@@ -3,14 +3,17 @@
 	#include <stdlib.h>
 	#include <errno.h>
 	#include <stdarg.h>
+	#include <string.h>
+	#include <stdbool.h>
+	#include "process.h"
 	#include "project.h"
 
-	FILE * fp = NULL;
-
 	/* prototypes */
-	nodeType *opr(int oper, int nops, ...);
+	nodeType *str(stringT s);
+	nodeType *opr(oper_types oper, int nops, ...);
 	nodeType *ide(int i);
 	nodeType *con(int value);
+	nodeType *typ(cTyp value);
 	void freeNode(nodeType *p);
 	int ex(nodeType *p);
 	int yylex(void);
@@ -18,21 +21,21 @@
 	void yyerror(char *s);
 	int sym[26];                    /* symbol table */
 
-		
-	int pyhead(const char * headToWrite);
-	int pybody(const char * bodyToWrite);
+	bool success = true;
+	nodeType * root = NULL;
 
-	int success = 1;
 %}
 
 %union {
+		stringT sArr;
     int iValue;                 /* integer value */
     char sIndex;                /* symbol table index */
     nodeType *nPtr;             /* node pointer */
+		cTyp cType;
 };
 
 // %token int_const float_const id string type_const DEFINE
-%token float_const string type_const DEFINE
+%token float_const DEFINE
 %token IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC or_const and_const eq_const shift_const rel_const inc_const
 %token param_const ELSE HEADER
 %left '+' '-'
@@ -41,198 +44,101 @@
 %nonassoc ELSE
 //%define parse.error verbose
 
+%token <cType> type_const
+%token <sArr> string
 %token <iValue> int_const
 %token <sIndex> id
 
-%type <nPtr> stat exp stat_list
+%type <nPtr> program program_unit translation_unit external_decl function_definition function_declarator stat exp exp_stat compound_stat jump_stat stat_list assignment_exp conditional_exp const_exp logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp shift_expression additive_exp mult_exp cast_exp unary_exp postfix_exp primary_exp argument_exp_list
 
-%start program_unit
+%start program
 
 %%
-program_unit				: HEADER program_unit           { pybody("# Headers\n\n"); }                    
-							| DEFINE primary_exp program_unit     { pybody("# Defines\n\n"); }            	
-							| translation_unit										{ pybody("# Code\n\n"); }
+program				: program_unit											  {root = opr(HEAD, 1, $1);}
 							;
-translation_unit			: external_decl 									
-							| translation_unit external_decl					
+program_unit	: translation_unit										{$$ = $1;}
 							;
-external_decl				: function_definition
-							| decl
+translation_unit			: external_decl 							{$$ = $1;}						
+							| translation_unit external_decl			{$$ = opr(TRANS_UNIT, 2, $1, $2);}
 							;
-function_definition			: type_const id function_declarator compound_stat 	{ pybody("# Function definition\n\n"); }			
+external_decl				: function_definition						{$$ = $1;}
 							;
-decl						: type_const init_declarator_list ';' 				
-							| type_const ';' 
+function_definition			: type_const id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, typ($1), ide($2), $3, $4); }			
 							;
-decl_list					: decl
-							| decl_list decl
+function_declarator	: '(' ')'															{$$ = opr(FUNC_DEC, 0);}
 							;
-init_declarator_list		: init_declarator
-							| init_declarator_list ',' init_declarator
+stat						: exp_stat 											  	{$$ = $1;}
+							| compound_stat 									  	{$$ = $1;}
+							| jump_stat														{$$ = $1;}
 							;
-init_declarator				: direct_declarator
-							| direct_declarator '=' initializer
+exp_stat					: exp ';'													{$$ = $1;}
+							| ';'																	{$$ = opr(';', 0);}
 							;
-spec_qualifier_list			: type_const spec_qualifier_list
-							| type_const
+compound_stat				: '{' stat_list '}'									 	{$$ = opr(COMP_STAT, 1, $2);}
 							;
-function_declarator			: '(' param_list ')'
-							| '(' ')'
+stat_list					: stat     												{$$ = $1;}
+							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
 							;
-direct_declarator			: id 																				
-							| direct_declarator '[' const_exp ']'							
-							| direct_declarator '['	']'
-							| direct_declarator '(' param_list ')' 			
-							| direct_declarator '(' id_list ')' 					
-							| direct_declarator '('	')' 							
+jump_stat				: RETURN exp ';'											{$$ = opr(RET, 1, $2);}
+							| RETURN ';'													{$$ = opr(RET, 0);}
 							;
-param_list					: param_decl
-							| param_list ',' param_decl
+exp							: assignment_exp										{$$ = $1;}
 							;
-param_decl					: type_const direct_declarator
-							| type_const abstract_declarator
-							| type_const
+assignment_exp				: conditional_exp							{$$ = $1;}	
 							;
-id_list						: id
-							| id_list ',' id
-							;
-initializer					: assignment_exp
-							| '{' initializer_list '}'
-							| '{' initializer_list ',' '}'
-							;
-initializer_list			: initializer
-							| initializer_list ',' initializer
-							;
-type_name					: spec_qualifier_list abstract_declarator
-							| spec_qualifier_list
-							;
-abstract_declarator			: direct_abstract_declarator
-							;
-direct_abstract_declarator	: '(' abstract_declarator ')'
-							| direct_abstract_declarator '[' const_exp ']'
-							// | '[' const_exp ']'
-							| direct_abstract_declarator '[' ']'
-							| '[' ']'
-							| direct_abstract_declarator '(' param_list ')'
-							| '(' param_list ')'
-							| direct_abstract_declarator '(' ')'
-							| '(' ')'
-							;
-stat						: labeled_stat 									      	
-							| exp_stat 											  	
-							| compound_stat 									  	
-							| selection_stat  									  
-							| iteration_stat
-							| jump_stat
-							;
-labeled_stat				: id ':' stat
-							| CASE const_exp ':' stat
-							| DEFAULT ':' stat
-							;
-exp_stat					: exp ';'
-							| ';'
-							;
-compound_stat				: '{' decl_list stat_list '}'   						
-							| '{' stat_list '}'										
-							| '{' decl_list	'}'										
-							| '{' '}'												
-							;
-stat_list					: stat     												
-							| stat_list stat  										
-							;
-selection_stat				: IF '(' exp ')' stat 									%prec THEN
-							| IF '(' exp ')' stat ELSE stat
-							| SWITCH '(' exp ')' stat
-							;
-iteration_stat				: WHILE '(' exp ')' stat
-							| DO stat WHILE '(' exp ')' ';'
-							| FOR '(' exp ';' exp ';' exp ')' stat
-							| FOR '(' id IN id ')' stat
-							;
-jump_stat				: CONTINUE ';'
-							| BREAK ';'
-							| RETURN exp ';'
-							| RETURN ';'
-							;
-exp							: assignment_exp
-							| exp ',' assignment_exp
-							;
-assignment_exp				: conditional_exp
-							| unary_exp assignment_operator assignment_exp			
-							;
-assignment_operator			: PUNC
-							| '='
-							;
-conditional_exp				: logical_or_exp
-							| logical_or_exp '?' exp ':' conditional_exp
+conditional_exp				: logical_or_exp							{$$ = $1;}
 							;	
-const_exp					: conditional_exp
+const_exp					: conditional_exp                 {$$ = $1;}
 							;
-logical_or_exp				: logical_and_exp
-							| logical_or_exp or_const logical_and_exp
+logical_or_exp				: logical_and_exp             {$$ = $1;}
 							;
-logical_and_exp				: inclusive_or_exp
-							| logical_and_exp and_const inclusive_or_exp
+logical_and_exp				: inclusive_or_exp          	{$$ = $1;}
 							;
-inclusive_or_exp			: exclusive_or_exp
-							| inclusive_or_exp '|' exclusive_or_exp
+inclusive_or_exp			: exclusive_or_exp						{$$ = $1;}
 							;
-exclusive_or_exp			: and_exp
-							| exclusive_or_exp '^' and_exp
+exclusive_or_exp			: and_exp											{$$ = $1;}
 							;
-and_exp						: equality_exp
-							| and_exp '&' equality_exp
+and_exp						: equality_exp										{$$ = $1;}
 							;
-equality_exp				: relational_exp
-							| equality_exp eq_const relational_exp
+equality_exp				: relational_exp								{$$ = $1;}
 							;
-relational_exp				: shift_expression
-							| relational_exp '<' shift_expression
-							| relational_exp '>' shift_expression
-							| relational_exp rel_const shift_expression
+relational_exp				: shift_expression						{$$ = $1;}
 							;
-shift_expression			: additive_exp
-							| shift_expression shift_const additive_exp
+shift_expression			: additive_exp								{$$ = $1;}
 							;
-additive_exp				: mult_exp
-							| additive_exp '+' mult_exp
-							| additive_exp '-' mult_exp
+additive_exp				: mult_exp											{$$ = $1;}
 							;
-mult_exp					: cast_exp
-							| mult_exp '*' cast_exp
-							| mult_exp '/' cast_exp
-							| mult_exp '%' cast_exp
+mult_exp					: cast_exp												{$$ = $1;}
 							;
-cast_exp					: unary_exp
-							| '(' type_name ')' cast_exp
+cast_exp					: unary_exp												{$$ = $1;}
 							;
-unary_exp					: postfix_exp
-							| inc_const unary_exp
-							| unary_operator cast_exp
+unary_exp					: postfix_exp											{$$ = $1;}				
 							;
-unary_operator				: '&' | '*' | '+' | '-' | '~' | '!' 				
+postfix_exp					: primary_exp 		          		{$$ = $1;}				
+							| id '(' argument_exp_list ')'				{$$ = opr(POST_EXP, 2, ide($1), $3);} 
+
+primary_exp					: id 														{$$ = ide($1);}
+							| int_const														{$$ = con($1);}
+							| string 															{$$ = str($1);}
+							| '(' exp ')'													{$$ = $2;}
 							;
-postfix_exp					: primary_exp 											
-							| postfix_exp '[' exp ']'
-							| postfix_exp '(' argument_exp_list ')'
-							| postfix_exp '(' ')'
-							| postfix_exp '.' id
-							| postfix_exp inc_const
-							;
-primary_exp					: id 													
-							| consts 												
-							| string 												
-							| '(' exp ')'
-							;
-argument_exp_list			: assignment_exp
-							| argument_exp_list ',' assignment_exp
-							;
-consts						: int_const 											
-							| float_const
+argument_exp_list			: assignment_exp							{$$ = $1;}
+							| argument_exp_list ',' assignment_exp	{$$ = opr(ARG_EXP_LIST, 2, $1, $3);}
 							;
 %%
 
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
+
+nodeType *str(stringT s) {
+	nodeType *p;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->type = typeStr;
+	strcpy(p->str.s, s);
+	return p;
+}
 
 nodeType *con(int value) {
 	nodeType *p;
@@ -256,7 +162,7 @@ nodeType *ide(int i) {
 	return p;
 	} 
 
-nodeType *opr(int oper, int nops, ...) {
+nodeType *opr(oper_types oper, int nops, ...) {
 	va_list ap;
 	nodeType *p;
 	int i;
@@ -276,6 +182,17 @@ nodeType *opr(int oper, int nops, ...) {
 	return p;
 }
 
+nodeType *typ(cTyp value) {
+	nodeType *p;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->type = typeTyp;
+	p->typ.t = value;
+	return p;
+}
+
 void freeNode(nodeType *p) {
 	int i;
 	if (!p) return;
@@ -287,30 +204,14 @@ void freeNode(nodeType *p) {
 	free (p);
 }
 
-int pyhead(const char * headToWrite) {
-	// TODO: Write at the beggining of file
-	fputs(headToWrite, fp);
-}
-
-int pybody(const char * bodyToWrite) {
-	fputs(bodyToWrite, fp);
-}
-
 int main()
 {
-		fp = fopen("translated.py", "w");
-		if (fp == NULL) {
-			perror("fopen");
-		}
-
     yyparse();
+
+		processTree(root, &success);
+
     if(success)
     	printf("Parsing Successful\n");
-
-
-		if (fclose(fp) < 0) {
-			perror("fclose");
-		}
 
     return 0;
 }
@@ -319,5 +220,6 @@ void yyerror(char *msg)
 {
 	extern int yylineno;
 	printf("Parsing Failed\nLine Number: %d %s\n",yylineno,msg);
+	success = false;
 }
 
