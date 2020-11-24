@@ -1,4 +1,5 @@
 int main() {
-  print("Hola mundo");
+  string a = "Chau mundo";
+  print(a);
   return 0;
 }

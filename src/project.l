@@ -37,7 +37,7 @@
 "*="|"/="|"+="|"%="|">>="|"-="|"<<="|"^="									{return PUNC;}
 [0-9]+																										{yylval.iValue = atoi(yytext); return int_const;}
 [0-9]+"."[0-9]+																						{return float_const;}	
-[a-zA-Z_][a-zA-Z_0-9]*			 															{return id;}
+[a-zA-Z_][a-zA-Z_0-9]*			 															{strcpy(yylval.ident, yytext); return id;}
 \"(\\.|[^\"])*\"																					{strcpy(yylval.sArr, yytext); return string;}
 "//"(\\.|[^\n])*[\n]																			;
 [/][*]([^*]|[*]*[^*/])*[*]+[/]                            ;

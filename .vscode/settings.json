@@ -1,5 +1,6 @@
 {
   "files.associations": {
-    "inp": "c"
+    "inp": "c",
+    "type_traits": "c"
   }
 }

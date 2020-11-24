@@ -5,13 +5,11 @@ typedef enum { typeCon, typeStr, typeId, typeOpr, typeTyp } nodeEnum;
 
 typedef enum { voidTyp, intTyp, stringTyp, floatTyp } cTyp;
 
-typedef enum {PROG, TRANS_UNIT, EXT_DECL, FUNC_DEF, FUNC_DEC, COMP_STAT, EXP_STAT, JUMP_STAT, STAT_LIST, RET, POST_EXP, ARG_EXP_LIST, HEAD} oper_types; 
+typedef enum {TRANS_UNIT, FUNC_DEF, FUNC_DEC, COMP_STAT, STAT_LIST, RET, POST_EXP, ARG_EXP_LIST, HEAD, p, PROG} oper_types; 
 
 #define STRING_MAX_SIZE 256
-#define IDENTIFIER_MAX_SIZE 128
 
 typedef char stringT[STRING_MAX_SIZE];
-typedef char identifierT[IDENTIFIER_MAX_SIZE];
 
 typedef struct {
     stringT s;
@@ -24,7 +22,7 @@ typedef struct {
 
 /* identifiers */
 typedef struct {
-    identifierT i;                      /* subscript to sym array */
+    int i;                      /* subscript to sym array */
 } idNodeType;
 
 /* operators */

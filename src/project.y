@@ -11,7 +11,7 @@
 	/* prototypes */
 	nodeType *str(stringT s);
 	nodeType *opr(oper_types oper, int nops, ...);
-	nodeType *ide(int i);
+	nodeType *ide(identifierT iden);
 	nodeType *con(int value);
 	nodeType *typ(cTyp value);
 	void freeNode(nodeType *p);
@@ -29,7 +29,7 @@
 %union {
 		stringT sArr;
     int iValue;                 /* integer value */
-    char sIndex;                /* symbol table index */
+    identifierT ident;                /* symbol table index */
     nodeType *nPtr;             /* node pointer */
 		cTyp cType;
 };
@@ -47,34 +47,33 @@
 %token <cType> type_const
 %token <sArr> string
 %token <iValue> int_const
-%token <sIndex> id
+%token <ident> id
 
 %type <nPtr> program program_unit translation_unit external_decl function_definition function_declarator stat exp exp_stat compound_stat jump_stat stat_list assignment_exp conditional_exp const_exp logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp shift_expression additive_exp mult_exp cast_exp unary_exp postfix_exp primary_exp argument_exp_list
 
 %start program
 
 %%
-program				: program_unit											  {root = opr(HEAD, 1, $1);}
+program				: program_unit											  {root = opr(PROG, 1, $1);}
 							;
 program_unit	: translation_unit										{$$ = $1;}
 							;
 translation_unit			: external_decl 							{$$ = $1;}						
 							| translation_unit external_decl			{$$ = opr(TRANS_UNIT, 2, $1, $2);}
 							;
-external_decl				: function_definition						{$$ = $1;}
+external_decl				: function_definition						{$$ = opr(EXT_DECL, 1, $1);}
 							;
 function_definition			: type_const id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, typ($1), ide($2), $3, $4); }			
 							;
 function_declarator	: '(' ')'															{$$ = opr(FUNC_DEC, 0);}
 							;
-stat						: exp_stat 											  	{$$ = $1;}
-							| compound_stat 									  	{$$ = $1;}
-							| jump_stat														{$$ = $1;}
+stat						: exp_stat 											  	{$$ = opr(EXP_STAT, 1, $1);}
+							| compound_stat 									  	{$$ = opr(COMP_STAT, 1, $1);}
+							| jump_stat														{$$ = opr(JUMP_STAT, 1, $1);}
 							;
 exp_stat					: exp ';'													{$$ = $1;}
-							| ';'																	{$$ = opr(';', 0);}
 							;
-compound_stat				: '{' stat_list '}'									 	{$$ = opr(COMP_STAT, 1, $2);}
+compound_stat				: '{' stat_list '}'									 	{$$ = $2;}
 							;
 stat_list					: stat     												{$$ = $1;}
 							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
@@ -101,7 +100,7 @@ exclusive_or_exp			: and_exp											{$$ = $1;}
 and_exp						: equality_exp										{$$ = $1;}
 							;
 equality_exp				: relational_exp								{$$ = $1;}
-							;
+							; 
 relational_exp				: shift_expression						{$$ = $1;}
 							;
 shift_expression			: additive_exp								{$$ = $1;}
@@ -151,14 +150,14 @@ nodeType *con(int value) {
 	return p;
 }
 
-nodeType *ide(int i) {
+nodeType *ide(identifierT iden) {
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
 	p->type = typeId;
-	p->ide.i = i;
+	strcpy(p->ide.i, iden);
 	return p;
 	} 
 
