@@ -49,67 +49,80 @@ extern int yydebug;
 # define YYTOKENTYPE
   enum yytokentype
   {
-    int_const = 258,
-    float_const = 259,
-    id = 260,
-    string = 261,
-    type_const = 262,
-    DEFINE = 263,
-    IF = 264,
-    FOR = 265,
-    DO = 266,
-    WHILE = 267,
-    BREAK = 268,
-    SWITCH = 269,
-    CONTINUE = 270,
-    RETURN = 271,
-    CASE = 272,
-    DEFAULT = 273,
-    PUNC = 274,
-    or_const = 275,
-    and_const = 276,
-    eq_const = 277,
-    shift_const = 278,
-    rel_const = 279,
-    inc_const = 280,
-    param_const = 281,
-    ELSE = 282,
-    HEADER = 283,
-    THEN = 284
+    float_const = 258,
+    string = 259,
+    type_const = 260,
+    DEFINE = 261,
+    IF = 262,
+    FOR = 263,
+    IN = 264,
+    DO = 265,
+    WHILE = 266,
+    BREAK = 267,
+    SWITCH = 268,
+    CONTINUE = 269,
+    RETURN = 270,
+    CASE = 271,
+    DEFAULT = 272,
+    PUNC = 273,
+    or_const = 274,
+    and_const = 275,
+    eq_const = 276,
+    shift_const = 277,
+    rel_const = 278,
+    inc_const = 279,
+    param_const = 280,
+    ELSE = 281,
+    HEADER = 282,
+    THEN = 283,
+    int_const = 284,
+    id = 285
   };
 #endif
 /* Tokens.  */
-#define int_const 258
-#define float_const 259
-#define id 260
-#define string 261
-#define type_const 262
-#define DEFINE 263
-#define IF 264
-#define FOR 265
-#define DO 266
-#define WHILE 267
-#define BREAK 268
-#define SWITCH 269
-#define CONTINUE 270
-#define RETURN 271
-#define CASE 272
-#define DEFAULT 273
-#define PUNC 274
-#define or_const 275
-#define and_const 276
-#define eq_const 277
-#define shift_const 278
-#define rel_const 279
-#define inc_const 280
-#define param_const 281
-#define ELSE 282
-#define HEADER 283
-#define THEN 284
+#define float_const 258
+#define string 259
+#define type_const 260
+#define DEFINE 261
+#define IF 262
+#define FOR 263
+#define IN 264
+#define DO 265
+#define WHILE 266
+#define BREAK 267
+#define SWITCH 268
+#define CONTINUE 269
+#define RETURN 270
+#define CASE 271
+#define DEFAULT 272
+#define PUNC 273
+#define or_const 274
+#define and_const 275
+#define eq_const 276
+#define shift_const 277
+#define rel_const 278
+#define inc_const 279
+#define param_const 280
+#define ELSE 281
+#define HEADER 282
+#define THEN 283
+#define int_const 284
+#define id 285
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef int YYSTYPE;
+union YYSTYPE
+{
+#line 28 "project.y"
+
+    int iValue;                 /* integer value */
+    char sIndex;                /* symbol table index */
+    nodeType *nPtr;             /* node pointer */
+
+#line 123 "y.tab.h"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif

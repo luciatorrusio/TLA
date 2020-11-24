@@ -1,32 +1,51 @@
 %{
-	#include<stdio.h>
-	#include<errno.h>
-
-	int yylex(void);
-	int yyerror(const char *s);
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <errno.h>
+	#include <stdarg.h>
+	#include "project.h"
 
 	FILE * fp = NULL;
 
-	int pyhead(const char * headToWrite) {
-		// TODO: Write at the beggining of file
-		fputs(headToWrite, fp);
-	}
+	/* prototypes */
+	nodeType *opr(int oper, int nops, ...);
+	nodeType *ide(int i);
+	nodeType *con(int value);
+	void freeNode(nodeType *p);
+	int ex(nodeType *p);
+	int yylex(void);
+	
+	void yyerror(char *s);
+	int sym[26];                    /* symbol table */
 
-	int pybody(const char * bodyToWrite) {
-		fputs(bodyToWrite, fp);
-	}
+		
+	int pyhead(const char * headToWrite);
+	int pybody(const char * bodyToWrite);
 
 	int success = 1;
 %}
 
-%token int_const float_const id string type_const DEFINE
-%token IF FOR DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC or_const and_const eq_const shift_const rel_const inc_const
+%union {
+    int iValue;                 /* integer value */
+    char sIndex;                /* symbol table index */
+    nodeType *nPtr;             /* node pointer */
+};
+
+// %token int_const float_const id string type_const DEFINE
+%token float_const string type_const DEFINE
+%token IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC or_const and_const eq_const shift_const rel_const inc_const
 %token param_const ELSE HEADER
 %left '+' '-'
 %left '*' '/'
 %nonassoc THEN
 %nonassoc ELSE
 //%define parse.error verbose
+
+%token <iValue> int_const
+%token <sIndex> id
+
+%type <nPtr> stat exp stat_list
+
 %start program_unit
 
 %%
@@ -57,18 +76,15 @@ init_declarator				: direct_declarator
 spec_qualifier_list			: type_const spec_qualifier_list
 							| type_const
 							;
-function_declarator			: '(' param_type_list ')'
+function_declarator			: '(' param_list ')'
 							| '(' ')'
 							;
 direct_declarator			: id 																				
 							| direct_declarator '[' const_exp ']'							
 							| direct_declarator '['	']'
-							| direct_declarator '(' param_type_list ')' 			
+							| direct_declarator '(' param_list ')' 			
 							| direct_declarator '(' id_list ')' 					
 							| direct_declarator '('	')' 							
-							;
-param_type_list				: param_list
-							| param_list ',' param_const
 							;
 param_list					: param_decl
 							| param_list ',' param_decl
@@ -97,8 +113,8 @@ direct_abstract_declarator	: '(' abstract_declarator ')'
 							// | '[' const_exp ']'
 							| direct_abstract_declarator '[' ']'
 							| '[' ']'
-							| direct_abstract_declarator '(' param_type_list ')'
-							| '(' param_type_list ')'
+							| direct_abstract_declarator '(' param_list ')'
+							| '(' param_list ')'
 							| direct_abstract_declarator '(' ')'
 							| '(' ')'
 							;
@@ -131,13 +147,7 @@ selection_stat				: IF '(' exp ')' stat 									%prec THEN
 iteration_stat				: WHILE '(' exp ')' stat
 							| DO stat WHILE '(' exp ')' ';'
 							| FOR '(' exp ';' exp ';' exp ')' stat
-							| FOR '(' exp ';' exp ';'	')' stat
-							| FOR '(' exp ';' ';' exp ')' stat
-							| FOR '(' exp ';' ';' ')' stat
-							| FOR '(' ';' exp ';' exp ')' stat
-							| FOR '(' ';' exp ';' ')' stat
-							| FOR '(' ';' ';' exp ')' stat
-							| FOR '(' ';' ';' ')' stat
+							| FOR '(' id IN id ')' stat
 							;
 jump_stat				: CONTINUE ';'
 							| BREAK ';'
@@ -222,6 +232,70 @@ consts						: int_const
 							;
 %%
 
+#define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
+
+nodeType *con(int value) {
+	nodeType *p;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->type = typeCon;
+	p->con.value = value;
+	return p;
+}
+
+nodeType *ide(int i) {
+	nodeType *p;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->type = typeId;
+	p->ide.i = i;
+	return p;
+	} 
+
+nodeType *opr(int oper, int nops, ...) {
+	va_list ap;
+	nodeType *p;
+	int i;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	if ((p->opr.op = malloc(nops * sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->type = typeOpr;
+	p->opr.oper = oper;
+	p->opr.nops = nops;
+	va_start(ap, nops);
+	for (i = 0; i < nops; i++)
+	p->opr.op[i] = va_arg(ap, nodeType*);
+	va_end(ap);
+	return p;
+}
+
+void freeNode(nodeType *p) {
+	int i;
+	if (!p) return;
+	if (p->type == typeOpr) {
+		for (i = 0; i < p->opr.nops; i++)
+			freeNode(p->opr.op[i]);
+		free(p->opr.op);
+	}
+	free (p);
+}
+
+int pyhead(const char * headToWrite) {
+	// TODO: Write at the beggining of file
+	fputs(headToWrite, fp);
+}
+
+int pybody(const char * bodyToWrite) {
+	fputs(bodyToWrite, fp);
+}
+
 int main()
 {
 		fp = fopen("translated.py", "w");
@@ -241,11 +315,9 @@ int main()
     return 0;
 }
 
-int yyerror(const char *msg)
+void yyerror(char *msg)
 {
 	extern int yylineno;
 	printf("Parsing Failed\nLine Number: %d %s\n",yylineno,msg);
-	success = 0;
-	return 0;
 }
 

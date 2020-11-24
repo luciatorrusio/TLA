@@ -1,6 +1,4 @@
 # Function definition
 
-# Function definition
-
-# Function definition
+# Code
 

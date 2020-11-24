@@ -21,13 +21,13 @@ DIGIT   [0-9]
 %%
 
 <INITIAL>rotate[ \t]*[(]  {BEGIN(ARG); return ROTATE; }
-<INITIAL>load[ \t]*[(]   {BEGIN(ARG);return LOAD; }
-<INITIAL>mirror[ \t]*[(]  {BEGIN(ARG);return MIRROR;}
-<INITIAL>collage[ \t]*[(] {BEGIN(ARG);return COLLAGE;}
-<INITIAL>invertColor[ \t]*[(]    {BEGIN(ARG);return INVERTCOLOR;}
+<INITIAL>load[ \t]*[(]   {BEGIN(ARG); return LOAD; }
+<INITIAL>mirror[ \t]*[(]  {BEGIN(ARG); return MIRROR;}
+<INITIAL>collage[ \t]*[(] {BEGIN(ARG); return COLLAGE;}
+<INITIAL>invertColor[ \t]*[(]    {BEGIN(ARG); return INVERTCOLOR;}
 <ARG>[0-9A-Za-z/\.]+	{arg = yytext; return ARGUMENT;}
 <ARG>,			{num++;}
-<ARG>[)] {num = 0;BEGIN(INITIAL);}
+<ARG>[)] {num = 0; BEGIN(INITIAL);}
 <INITIAL>;           {return END;}
 <INITIAL>.	    ;
 <INITIAL>\/\/   {BEGIN(COMMENT);}
