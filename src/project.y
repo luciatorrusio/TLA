@@ -83,7 +83,7 @@ direct_declarator			: id 													{$$ = ide($1);}
 							| id '[' const_exp ']'								{$$ = opr(DIR_DECL_E, 2, $1, $3);}		
 							| id '[' ']'													{$$ = opr(DIR_DECL_ARR, 1, ide($1));}	
 							| id '(' param_list ')' 							{$$ = opr(DIR_DECL_L, 2, ide($1), $3);}
-							| id '('	')' 							  				{$$ = opr(DIR_DECL, 1, ide($1));}
+//							| id '('	')' 							  				{$$ = opr(DIR_DECL, 1, ide($1));}
 							; 
 param_list					: assignment_exp								{$$ = $1;}
 							| param_list ',' assignment_exp				{$$ = opr(PARAM_LIST, 2, $1, $3);}
