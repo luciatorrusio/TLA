@@ -13,7 +13,7 @@ $(OUT): $(DEPS)
 	@mkdir -p $(TGT_CONTEXT)
 	lex -o $(TGT_CONTEXT)/lex.yy.c $(SRC_CONTEXT)/project.l
 	bison -b $(TGT_CONTEXT)/y -dy $(SRC_CONTEXT)/project.y
-	gcc -o $@ $(TGT_CONTEXT)/y.tab.c -I $(INCLUDE) $(SRC_CONTEXT)/process.c $(TGT_CONTEXT)/lex.yy.c -lfl -lm
+	gcc -o $@ $(TGT_CONTEXT)/y.tab.c -I $(INCLUDE) $(SRC_CONTEXT)/process.c $(TGT_CONTEXT)/lex.yy.c -lfl -lm -g
 	#./a.out < inp
 
 run: $(OUT) $(TEST_OUT)
@@ -22,6 +22,6 @@ run: $(OUT) $(TEST_OUT)
 all: $(OUT)
 
 clean:
-	rm -f $(OUT)
+	rm -rf $(TGT_CONTEXT)/*
 
 .PHONY: all clean

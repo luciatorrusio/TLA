@@ -70,7 +70,7 @@ external_decl				: function_definition						{$$ = opr(EXT_DECL, 1, $1);}
 							;
 function_definition			: type_const id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, typ($1), ide($2), $3, $4); }			
 							;
-decl						: type_const init_declarator_list ';'  {$$ = opr(DECL, 2, $1, $2);}
+decl						: type_const init_declarator_list ';'  {$$ = opr(DECL, 2, typ($1), $2);}
 							;
 decl_list					: decl														{$$ = $1;}
 							| decl_list decl											{$$ = opr(DECL_LIST, 2, $1, $2);}

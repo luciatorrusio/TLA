@@ -3,8 +3,8 @@
 %{
 	#include<stdio.h>
 	#include<stdlib.h>
-	#include"project.h"
-	#include"y.tab.h"
+	#include"../includes/project.h"
+	#include"../target/y.tab.h"
 	#include<math.h>
 %}
 %%
