@@ -2,9 +2,19 @@ string fun1(string a) {
   return a;
 }
 
+int array() {
+  int a[] = [1, 2, 3, 4];
+  return a;
+}
+
 int main() {
   string b = "Puede ser, pa?";
   string a = fun1(b);
+  int c[] = array();
+  int i;
+  for(i = 0; i < 4 ; i++) {
+    print(c[i]);
+  }
   print(a);
   return 0;
 }
