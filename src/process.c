@@ -16,7 +16,12 @@ static void printParams(nodeType * t);
 static void translate_argument_exp_list(nodeType * t);
 static void translate_primary_exp(nodeType * t);
 static void translate_postfix_exp(nodeType * t);
-static void translate_const_exp(nodeType *t);
+static void translate_unary_exp(nodeType * t);
+static void translate_mult_exp(nodeType * t);
+static void translate_additive_exp(nodeType * t);
+static void translate_shift_exp(nodeType * t);
+static void translate_relational_exp(nodeType * t);
+static void translate_const_exp(nodeType * t);
 static void translate_assignment_exp(nodeType * t);
 static void translate_exp(nodeType * t);
 static void translate_exp_stat(nodeType * t);
@@ -87,35 +92,68 @@ static void prefixPrint(nodeType * t, int depth) {
 
 	prefIndent[j] = '\0';
 
-	printf("%snode type: %d\n", prefIndent, t->type);
+	char * type; 
 
 	switch(t->type) {
 		case typeOpr: 
-			printf("%soper: %d\n", prefIndent, t->opr.oper);
-			printf("%snops: %d\n", prefIndent, t->opr.nops);
+			switch(t->typ.t) {
+				case imageTyp:
+					type = "Image";
+					break;
+				case intTyp:
+					type = "Integer";
+					break;
+				case floatTyp:
+					type = "Float";
+					break;
+				case stringTyp:
+					type = "String";
+					break;
+			}
+			fprintf(stderr, "%sNode Type: Operator\n", prefIndent);
+			fprintf(stderr, "%s- Operator: %d\n", prefIndent, t->opr.oper);
+			fprintf(stderr, "%s- Number of Operators: %d\n", prefIndent, t->opr.nops);
 			for (unsigned int i = 0; i < t->opr.nops; i++) {
-				printf("%sop n-%d\n", prefIndent, i);
+				fprintf(stderr, "%s--> Operator Number %d\n", prefIndent, i);
 				prefixPrint(t->opr.op[i], depth+1);
 			}
 			break;
 		case typeCon: 
-			printf("%sintConst: %d\n", prefIndent, t->con.value);
+			fprintf(stderr, "%sNode Type: Integer Constant\n", prefIndent);
+			fprintf(stderr, "%s- Constant: %d\n", prefIndent, t->con.value);
 			break;
 		case typeStr: 
-			printf("%sstring: %s\n", prefIndent, t->str.s);
+			fprintf(stderr, "%sNode Type: String\n", prefIndent);
+			fprintf(stderr, "%s-String: %s\n", prefIndent, t->str.s);
 			break;
 		case typeId: 
-			printf("%sid: %s\n", prefIndent, t->ide.i);
+			fprintf(stderr, "%sNode Type: ID\n", prefIndent);
+			fprintf(stderr, "%s- ID: %s\n", prefIndent, t->ide.i);
 			break;
-		case typeTyp: 
-			printf("%stype: %d\n", prefIndent, t->typ.t);
+		case typeTyp:
+			fprintf(stderr, "%sNode Type: Type\n", prefIndent); 
+			switch(t->typ.t) {
+				case imageTyp:
+					type = "Image";
+					break;
+				case intTyp:
+					type = "Integer";
+					break;
+				case floatTyp:
+					type = "Float";
+					break;
+				case stringTyp:
+					type = "String";
+					break;
+			}
+			fprintf(stderr, "%s- Type: %s\n", prefIndent, type);
 			break;
 	}
 }
 
 static void addIndentation() {
 	if (indentLevel + 2 >= MAX_INDENTATION_LEVEL) {
-		printf("too much indentation\n");
+		fprintf(stderr, "too much indentation\n");
 	}
 	indent[indentLevel++] = '\t';
 	indent[indentLevel] = '\0';
@@ -123,29 +161,29 @@ static void addIndentation() {
 
 static void delIndentation() {
 	if (indentLevel == 0) {
-		printf("error, trying to undo indentation not possible\n");
+		fprintf(stderr, "error, trying to undo indentation not possible\n");
 	}
 	indent[--indentLevel] = '\0';
 }
 
 static void translate_argument_exp_list(nodeType * t) {
-	printf("FOUND argument_exp_list\n");
+	fprintf(stderr, "FOUND argument_exp_list\n");
 
   if(t->type == typeOpr && t->opr.oper == ARG_EXP_LIST && t->opr.nops == 2) {
-		printf("2 argumentos\n");
+		fprintf(stderr, "2 argumentos\n");
 		nodeType * list = t->opr.op[0];
 		nodeType * terminal = t->opr.op[1];
 		translate_argument_exp_list(list);
     translate_assignment_exp(terminal);
 	}
 	else {
-		printf("0 argumentos\n");
+		fprintf(stderr, "0 argumentos\n");
 		translate_assignment_exp(t);
 	}
 }
 
 static void translate_primary_exp(nodeType * t){
-	printf("FOUND primary_exp\n");
+	fprintf(stderr, "FOUND primary_exp\n");
 	
   switch(t->type) {
 		case typeOpr: 
@@ -154,26 +192,26 @@ static void translate_primary_exp(nodeType * t){
       } 
 			break;
 		case typeCon: 
-			printf("PRINTING CONSTANT\n");
+			fprintf(stderr, "PRINTING CONSTANT\n");
 			pybody("%d", t->con.value);
 			break;
 		case typeStr: 
-			printf("PRINTING STRING\n");
+			fprintf(stderr, "PRINTING STRING\n");
 			pybody("%s", t->str.s);
 			break;
 		case typeId: 
-			printf("PRINTING IDENTIFIER\n");
+			fprintf(stderr, "PRINTING IDENTIFIER\n");
 			pybody("%s", t->ide.i);
 			break;
 		case typeTyp: 
-			printf("PRINTING TYPE\n");
+			fprintf(stderr, "PRINTING TYPE\n");
 			pybody("%d", t->typ.t);
 			break;
 	}  
 }
 
 static void translate_postfix_exp(nodeType * t) {
-	printf("FOUND postfix_exp\n");
+	fprintf(stderr, "FOUND postfix_exp\n");
 
 	if (t->opr.oper == POST_EXP && t->opr.nops == 2) {
 		nodeType * funName = t->opr.op[0];
@@ -190,20 +228,158 @@ static void translate_postfix_exp(nodeType * t) {
 	}
 }
 
-static void translate_const_exp(nodeType * t) {
-	printf("FOUND const_exp\n");
+static void translate_unary_exp(nodeType * t){
+	fprintf(stderr, "FOUND unary_exp\n");
+	if(t->type == typeOpr && t->opr.oper == UNARY_EXP_OP && t->opr.nops == 2){
+    nodeType * unaryOp = t->opr.op[0];
+    nodeType * cast_exp = t->opr.op[1];
+		switch(unaryOp->mop.op){
+			case AMP:
+				pybody("&");
+			break;
+			case AST:
+				pybody("*");
+			break;
+			case PLS:
+				pybody("+");
+			break;
+			case MNS:
+				pybody("-");
+			break;
+			case TIL:
+				pybody("~");
+			break;
+			case NEG:
+				pybody("int( 0 == ");
+				translate_unary_exp(cast_exp);
+				pybody(" )");
+			break;
+		}
+  }
+  else {
+    translate_postfix_exp(t);
+  }
+	
+}
 
-	translate_postfix_exp(t);
+static void translate_mult_exp(nodeType * t) {
+	fprintf(stderr, "FOUND mult_exp\n");
+	
+	if(t->type == typeOpr && t->opr.oper == MULT_EXP && t->opr.nops == 3) {
+		nodeType * first = t->opr.op[0];
+		nodeType * mop = t->opr.op[1];
+		nodeType * second = t->opr.op[2];
+
+		translate_mult_exp(first);
+		switch (mop->mop.op)
+		{
+		case AST:
+			pybody("*");
+			break;
+		case DIV:
+			pybody("/");
+			break;
+		case MOD:
+			pybody("%%");
+			break;
+		}
+		translate_unary_exp(second);
+	}
+	else {
+		translate_unary_exp(t);
+	}
+}
+
+static void translate_additive_exp(nodeType * t) {
+	fprintf(stderr, "FOUND additive_exp\n");
+	
+	if( t->type == typeOpr && t->opr.oper == ADD_EXP && t->opr.nops == 3){
+		nodeType *first = t->opr.op[0];
+		nodeType *second = t->opr.op[2];
+		translate_mult_exp(first);
+		switch(t->mop.op){
+			case PLS:
+				pybody("+");
+			break;
+			case MNS:
+				pybody("-");
+			break;
+		}
+		translate_mult_exp(second);		
+	}
+	else {
+		translate_mult_exp(t);
+	}
+}
+
+static void translate_shift_exp(nodeType * t) {
+	fprintf(stderr, "FOUND shift_exp\n");
+
+	if( t->type == typeOpr && t->opr.oper == SHI_EXP && t->opr.nops == 3){
+		nodeType *first = t->opr.op[0];
+		nodeType *second = t->opr.op[2];
+		translate_mult_exp(first);
+		switch(t->mop.op){
+			case L_SHF:
+				pybody("<<");
+			break;
+			case R_SHF:
+				pybody(">>");
+			break;
+		}
+		translate_shift_exp(second);		
+	}
+	else {
+		translate_additive_exp(t);
+	}
+}
+
+static void translate_relational_exp(nodeType *t){
+	fprintf(stderr, "FOUND relational_exp\n");
+
+	if( t->type == typeOpr && t->opr.oper == REL_EXP && t->opr.nops == 3) {
+		nodeType *first = t->opr.op[0];
+		nodeType *second = t->opr.op[2];
+		nodeType *rel_const = t->opr.op[1];
+		translate_relational_exp(first);
+		switch (rel_const->mop.op)
+		{
+		case GE_THAN:
+			pybody(">=");
+			break;
+		case LE_THAN:
+			pybody("<=");
+			break;
+		case G_THAN:
+			pybody(">");
+			break;
+		case L_THAN:
+			pybody("<");
+			break;
+		}
+		translate_relational_exp(second);
+
+	}
+	else {
+		translate_shift_exp(t);
+	}
+}
+
+//BASE
+static void translate_const_exp(nodeType * t) {
+	fprintf(stderr, "FOUND const_exp\n");
+	
+	translate_relational_exp(t);
 }
 
 static void translate_assignment_exp(nodeType * t) {
-	printf("FOUND assignment_exp\n");
+	fprintf(stderr, "FOUND assignment_exp\n");
 
 	translate_const_exp(t);
 }
 
 static void translate_exp(nodeType * t){
-	printf("FOUND exp\n");
+	fprintf(stderr, "FOUND exp\n");
 
 	// TODO: Jump all functions
 
@@ -211,20 +387,14 @@ static void translate_exp(nodeType * t){
 }
 
 static void translate_exp_stat(nodeType * t) {
-	printf("FOUND exp_stat\n");
+	fprintf(stderr, "FOUND exp_stat\n");
 	
 	pybody_ind("");
 	translate_exp(t);
 }
 
-// iteration_stat				
-//               : WHILE '(' exp ')' stat							{$$ = opr(WHILE, 2, $3, $5);}
-// 							| DO stat WHILE '(' exp ')' ';'       {$$ = opr(DO_WHILE, 2, $2, $5);}
-// 							| FOR '(' exp ';' exp ';' exp ')' stat  {$$ = opr(FOR, 4, $3, $5, $7, $9);}
-// 							| FOR '(' id IN id ')' stat						{$$ = opr(FOR_IN, 3, $3, $5, $7);}
-// 							;
 static void translate_iteration_stat(nodeType *t){
-	printf("FOUND selection_stat\n");
+	fprintf(stderr, "FOUND selection_stat\n");
   if(t->type == typeOpr && t->opr.oper == WHILE_STAT && t->opr.nops == 2) {
     nodeType * exp = t->opr.op[0];
 		nodeType * stat = t->opr.op[1];
@@ -284,7 +454,7 @@ static void translate_iteration_stat(nodeType *t){
 }
 
 static void translate_selection_stat(nodeType * t) {
-	printf("FOUND selection_stat\n");
+	fprintf(stderr, "FOUND selection_stat\n");
 
 	if(t->type == typeOpr && t->opr.oper == IF_STAT && t->opr.nops == 3) {
 		nodeType * exp = t->opr.op[0]; 
@@ -310,7 +480,7 @@ static void translate_selection_stat(nodeType * t) {
 
 
 static void translate_jump_stat(nodeType * t) {
-	printf("FOUND jump_stat\n");
+	fprintf(stderr, "FOUND jump_stat\n");
 	
   if(t->opr.oper == RET){
     pybody_ind("return ");
@@ -325,7 +495,7 @@ static void translate_jump_stat(nodeType * t) {
 }
 
 static void translate_stat(nodeType * t){
-	printf("FOUND stat\n");
+	fprintf(stderr, "FOUND stat\n");
 	
   if (t->type == typeOpr && t->opr.nops == 1) {
 		nodeType * stat = t->opr.op[0];
@@ -350,24 +520,24 @@ static void translate_stat(nodeType * t){
 }
 
 static void translate_stat_list(nodeType * t){
-	printf("FOUND stat_list\n");
+	fprintf(stderr, "FOUND stat_list\n");
 	
   if (t->opr.nops == 2){
-		printf("2 argumentos\n");
+		fprintf(stderr, "2 argumentos\n");
 		nodeType * stat_list = t->opr.op[0];
 		nodeType * stat = t->opr.op[1];
     translate_stat_list(stat_list);
 		translate_stat(stat);
   } 
 	else {
-		printf("0 argumentos\n");
+		fprintf(stderr, "0 argumentos\n");
 		translate_stat(t);
 	}
 	pybody("\n");
 }
 
 static void translate_decl(nodeType * t){
-	printf("FOUND decl\n");
+	fprintf(stderr, "FOUND decl\n");
 	
   if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
 		nodeType * type = t->opr.op[0];
@@ -383,7 +553,7 @@ static void translate_decl(nodeType * t){
 }
 
 static void translate_direct_declarator(nodeType * t) {
-	printf("FOUND direct_declarator\n");
+	fprintf(stderr, "FOUND direct_declarator\n");
 
 	if(t->type == typeOpr && t->opr.oper == DIR_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
@@ -401,10 +571,10 @@ static void translate_direct_declarator(nodeType * t) {
 }
 
 static void translate_initializer_list(nodeType * t) {
-	printf("FOUND initializer_list\n");
+	fprintf(stderr, "FOUND initializer_list\n");
 
 	if (t->opr.nops == 2){
-		printf("2 argumentos\n");
+		fprintf(stderr, "2 argumentos\n");
 		nodeType * initializer_list = t->opr.op[0];
 		nodeType * initializer = t->opr.op[1];
     translate_initializer_list(initializer_list);
@@ -412,13 +582,13 @@ static void translate_initializer_list(nodeType * t) {
 		translate_initializer(initializer);
   } 
 	else {
-		printf("0 argumentos\n");
+		fprintf(stderr, "0 argumentos\n");
 		translate_initializer(t);
 	}
 }
 
 static void translate_initializer(nodeType * t) {
-	printf("FOUND initializer\n");
+	fprintf(stderr, "FOUND initializer\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_LIST && t->opr.nops == 1) {
 		nodeType * list = t->opr.op[0];
@@ -432,7 +602,7 @@ static void translate_initializer(nodeType * t) {
 }
 
 static void translate_init_def_declarator(nodeType * t){
-	printf("FOUND init_declarator\n");
+	fprintf(stderr, "FOUND init_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DEF_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
@@ -448,7 +618,7 @@ static void translate_init_def_declarator(nodeType * t){
 }
 
 static void translate_init_declarator(nodeType * t){
-	printf("FOUND init_declarator\n");
+	fprintf(stderr, "FOUND init_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DECL && t->opr.nops == 2) {
 		nodeType * directDecl = t->opr.op[0];
@@ -457,7 +627,7 @@ static void translate_init_declarator(nodeType * t){
 		translate_direct_declarator(directDecl);
 		
 		if (initializer != NULL) {
-			printf("NON NULL INITIALIZER\n");
+			fprintf(stderr, "NON NULL INITIALIZER\n");
 			pybody(" = ");
 			translate_initializer(initializer);
 		}
@@ -465,24 +635,24 @@ static void translate_init_declarator(nodeType * t){
 }
 
 static void translate_decl_list(nodeType * t){
-	printf("FOUND decl_list\n");
+	fprintf(stderr, "FOUND decl_list\n");
 
 	if(t->type == typeOpr && t->opr.oper == DECL_LIST && t->opr.nops == 2) {
-		printf("2 argumentos\n");
+		fprintf(stderr, "2 argumentos\n");
     nodeType * decl_list = t->opr.op[0];
 		nodeType * decl = t->opr.op[1];
     translate_decl_list(decl_list);
     translate_decl(decl);
   }
 	else {
-		printf("0 argumentos\n");
+		fprintf(stderr, "0 argumentos\n");
 		translate_decl(t);
 	}
 	pybody("\n");
 }
 
 static void translate_compound_stat(nodeType * t) {
-	printf("FOUND compound_stat\n");
+	fprintf(stderr, "FOUND compound_stat\n");
 
 	if (t->type == typeOpr && t->opr.oper == COMP_STAT && t->opr.nops == 2) {
 		nodeType * decl_list = t->opr.op[0];
@@ -503,7 +673,7 @@ static void translate_compound_stat(nodeType * t) {
 // 							;
 
 static void	translate_param_decl(nodeType * t) {
-	printf("FOUND param_decl\n");
+	fprintf(stderr, "FOUND param_decl\n");
 
   if (t->type == typeOpr && t->opr.oper == PARAM_DECL && t->opr.nops == 2) {
 		translate_direct_declarator(t->opr.op[1]);
@@ -511,10 +681,10 @@ static void	translate_param_decl(nodeType * t) {
 }
 
 static void	translate_param_decl_list(nodeType * t) {
-	printf("FOUND param_decl_list\n");
+	fprintf(stderr, "FOUND param_decl_list\n");
 
   if(t->type == typeOpr && t->opr.oper == PARAM_DECL_LIST && t->opr.nops == 2) {
-		printf("2 argumentos\n");
+		fprintf(stderr, "2 argumentos\n");
     nodeType * param_decl_list = t->opr.op[0];
 		nodeType * param_decl = t->opr.op[1];
     translate_param_decl_list(param_decl_list);
@@ -522,14 +692,14 @@ static void	translate_param_decl_list(nodeType * t) {
     translate_param_decl(param_decl);
   }
 	else {
-		printf("0 argumentos\n");
+		fprintf(stderr, "0 argumentos\n");
 		translate_param_decl(t);
 	}
 }
 
 
 static void translate_function_declarator(nodeType * t) {
-	printf("FOUND function_declarator\n");
+	fprintf(stderr, "FOUND function_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == FUNC_DEC) {
 		pybody("(");
@@ -541,7 +711,7 @@ static void translate_function_declarator(nodeType * t) {
 }
 
 static void translate_function_definition(nodeType * t) {
-	printf("FOUND function_definition\n");
+	fprintf(stderr, "FOUND function_definition\n");
 	if (t->opr.nops == 4) {
 		nodeType * funName = t->opr.op[1];
 		nodeType * funDeclarator = t->opr.op[2];
@@ -558,7 +728,7 @@ static void translate_function_definition(nodeType * t) {
 }
 
 static void translate_external_decl(nodeType * t) {
-	printf("FOUND external_decl\n");
+	fprintf(stderr, "FOUND external_decl\n");
 
 	if (t->type == typeOpr && t->opr.op[0]->opr.oper == FUNC_DEF) {
 		translate_function_definition(t->opr.op[0]);
@@ -566,7 +736,7 @@ static void translate_external_decl(nodeType * t) {
 }
 
 static void translate_trans_unit(nodeType * t) {
-	printf("FOUND translation_unit\n");
+	fprintf(stderr, "FOUND translation_unit\n");
 	if (t->type == typeOpr && t->opr.oper == TRANS_UNIT && t->opr.nops == 2) {
 		nodeType * first = t->opr.op[0];
 		nodeType * second = t->opr.op[1];
@@ -580,7 +750,7 @@ static void translate_trans_unit(nodeType * t) {
 }
 
 static void translate_prog(nodeType * t) {
-	printf("FOUND program\n");
+	fprintf(stderr, "FOUND program\n");
 	// if header o define...
 
 	// else
@@ -588,7 +758,7 @@ static void translate_prog(nodeType * t) {
 }
 
 static void translateToPython(nodeType * t){
-	printf("Translating to Python!\n");
+	fprintf(stderr, "Translating to Python!\n");
   if (t->type == typeOpr && t->opr.oper == PROG) {
 			translate_prog(t->opr.op[0]);
 			pybody("\nmain()\n");
@@ -614,7 +784,7 @@ void processTree(nodeType * root, bool * success) {
 
 	if (!checked) {
 		*success = false;
-		printf("Type Conflict\n");
+		fprintf(stderr, "Type Conflict\n");
 		return;
 	}
 

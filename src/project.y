@@ -14,6 +14,7 @@
 	nodeType *ide(identifierT iden);
 	nodeType *con(int value);
 	nodeType *typ(cTyp value, bool arr);
+	nodeType *mop(mathOp op);
 	void freeNode(nodeType *p);
 	int ex(nodeType *p);
 	int yylex(void);
@@ -32,11 +33,12 @@
     identifierT ident;                /* symbol table index */
     nodeType *nPtr;             /* node pointer */
 		cTyp cType;
+		mathOp mOp;
 };
 
 // %token int_const float_const id string type_const DEFINE
-%token float_const DEFINE
-%token IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC or_const and_const eq_const shift_const rel_const inc_const
+%token DEFINE IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC
+%token or_const and_const eq_const neq_const shift_const_l shift_const_r rel_const_l rel_const_g inc_const
 %token param_const ELSE HEADER
 %left '+' '-'
 %left '*' '/'
@@ -45,17 +47,17 @@
 //%define parse.error verbose
 
 %token <cType> type_const
-%token <sArr> string
+%token <sArr> string float_const
 %token <iValue> int_const
 %token <ident> id
 
 %type <nPtr> program program_unit translation_unit external_decl function_definition function_declarator 
-%type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list assignment_exp conditional_exp const_exp 
+%type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list conditional_exp const_exp 
 %type <nPtr> logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp 
-%type <nPtr> shift_expression additive_exp mult_exp cast_exp unary_exp postfix_exp primary_exp argument_exp_list
+%type <nPtr> shift_exp additive_exp mult_exp unary_exp postfix_exp primary_exp argument_exp_list
 %type <nPtr> decl decl_list init_declarator direct_declarator initializer initializer_list
 %type <nPtr> param_decl_list param_decl type_qualifier init_def_declarator
-%type <nPtr> selection_stat iteration_stat
+%type <nPtr> selection_stat iteration_stat unary_operator non_operable_exp
 
 
 %start program
@@ -97,7 +99,7 @@ direct_declarator
 							| id '[' const_exp ']'								{$$ = opr(DIR_DECL, 2, ide($1), $3);}		
 							; 
 initializer					
-              : assignment_exp								      {$$ = $1;}
+              : exp								      						{$$ = $1;}
 							| '[' initializer_list ']'						{$$ = opr(INIT_LIST, 1, $2);}
 							| '[' initializer_list ',' ']'				{$$ = opr(INIT_LIST, 1, $2);}
 							;
@@ -156,16 +158,14 @@ stat_list
 							;
 
 exp							
-							: assignment_exp											{$$ = $1;}
+							: const_exp														{$$ = $1;}
 							;
-assignment_exp				
-							: conditional_exp											{$$ = $1;}	
-							;
-conditional_exp				
-							: logical_or_exp											{$$ = $1;}
-							;	
 const_exp					
 							: conditional_exp                 		{$$ = $1;}
+							| non_operable_exp										{$$ = $1;}
+							;
+conditional_exp
+							: logical_or_exp											{$$ = $1;}
 							;
 logical_or_exp				
 							: logical_and_exp             				{$$ = $1;}
@@ -186,22 +186,39 @@ equality_exp
 							: relational_exp											{$$ = $1;}
 							; 
 relational_exp				
-							: shift_expression										{$$ = $1;}
+							: shift_exp									            {$$ = $1;}
+							| relational_exp '<' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(L_THAN), $3 );}
+							| relational_exp '>' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(G_THAN), $3 );}
+							| relational_exp rel_const_l shift_exp  {$$ = opr(REL_EXP, 3, $1, mop(LE_THAN), $3);}
+							| relational_exp rel_const_g shift_exp  {$$ = opr(REL_EXP, 3, $1, mop(GE_THAN), $3);}
 							;
-shift_expression			
-							: additive_exp												{$$ = $1;}
+shift_exp			
+							: additive_exp													{$$ = $1;}
+							| shift_exp shift_const_l additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop(L_SHF), $3);}
+							| shift_exp shift_const_r additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop(R_SHF), $3);}
 							;
 additive_exp				
 							: mult_exp														{$$ = $1;}
+							| additive_exp '+' mult_exp           {$$ = opr(ADD_EXP, 3, $1, mop(PLS), $3);}
+							| additive_exp '-' mult_exp           {$$ = opr(ADD_EXP, 3, $1, mop(MNS), $3);}
 							;
 mult_exp					
-							: cast_exp														{$$ = $1;}
-							;
-cast_exp					
 							: unary_exp														{$$ = $1;}
+							| mult_exp '*' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(AST), $3);}
+							| mult_exp '/' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(DIV), $3);}
+							| mult_exp '%' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(MOD), $3);}
 							;
-unary_exp					
-							: postfix_exp													{$$ = $1;}				
+unary_exp			
+							: postfix_exp													{$$ = $1;}
+							| unary_operator unary_exp						{$$ = opr(UNARY_EXP_OP, 2, $1, $2);}
+							;
+unary_operator				
+							: '&' 																{$$ = mop(AMP);}
+							| '*'                                 {$$ = mop(AST);}
+							| '+'                                 {$$ = mop(PLS);}
+							| '-'                                 {$$ = mop(MNS);}
+							| '~'                                 {$$ = mop(TIL);}
+							| '!' 				                        {$$ = mop(NEG);}
 							;
 postfix_exp					
 							: primary_exp 		          					{$$ = $1;}				
@@ -211,12 +228,15 @@ postfix_exp
 primary_exp					
 							: id 																	{$$ = ide($1);}
 							| int_const														{$$ = con($1);}
-							| string 															{$$ = str($1);}
-							| '(' exp ')'													{$$ = $2;}
+							| float_const													{$$ = str($1);}
+							| '(' conditional_exp ')'							{$$ = $2;}
+							;
+non_operable_exp
+							: string 															{$$ = str($1);}
 							;
 argument_exp_list			
-							: assignment_exp											{$$ = $1;}
-							| argument_exp_list ',' assignment_exp	{$$ = opr(ARG_EXP_LIST, 2, $1, $3);}
+							: const_exp														{$$ = $1;}
+							| argument_exp_list ',' const_exp			{$$ = opr(ARG_EXP_LIST, 2, $1, $3);}
 							;
 %%
 
@@ -287,6 +307,17 @@ nodeType *typ(cTyp value, bool arr) {
 	return p;
 }
 
+nodeType *mop(mathOp op) {
+	nodeType *p;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->type = typeMop;
+	p->mop.op = op;
+	return p;
+}
+
 void freeNode(nodeType *p) {
 	int i;
 	if (!p) return;
@@ -312,7 +343,7 @@ int main()
 		freeNode(root);
 
     if(success)
-    	printf("Parsing Successful\n");
+    	fprintf(stderr, "Parsing Successful\n");
 
     return 0;
 }
@@ -320,7 +351,7 @@ int main()
 void yyerror(char *msg)
 {
 	extern int yylineno;
-	printf("Parsing Failed\nLine Number: %d %s\n",yylineno,msg);
+	fprintf(stderr, "Parsing Failed\nLine Number: %d %s\n",yylineno,msg);
 	success = false;
 	freeNode(root);
 }

@@ -1,8 +1,6 @@
 int main() {
-  int[] a = [0, 1, 2];
-
-  for (int b in a) {
-    print(b);
+  if (!-1) {
+    print("Dentro del IF");
   }
 
   return 0;

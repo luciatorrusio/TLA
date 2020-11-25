@@ -1,7 +1,7 @@
 def main():
-	a = [0, 1, 2]
-	for b in a:
-		print(b)
+	while(1):
+		print("No dejo de imprimir !")
+		return 0
 
 	return 0
 

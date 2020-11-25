@@ -1,0 +1,9 @@
+int main() {
+  int[] a = [0, 1, 2];
+
+  for (int b in a) {
+    print(b);
+  }
+
+  return 0;
+}
