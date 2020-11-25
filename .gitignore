@@ -1,2 +1,4 @@
 target
 .vscode
+pruebas_py/.pylintrc
+pruebas_py/__pycache__
