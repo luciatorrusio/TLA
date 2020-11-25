@@ -19,9 +19,10 @@ static void translate_postfix_exp(nodeType * t);
 static void translate_const_exp(nodeType *t);
 static void translate_assignment_exp(nodeType * t);
 static void translate_exp(nodeType * t);
-static void translate_exp_stat(nodeType *t);
-static void translate_jump_stat(nodeType *t);
-static void translate_stat(nodeType *t);
+static void translate_exp_stat(nodeType * t);
+static void translate_selection_stat(nodeType * t);
+static void translate_jump_stat(nodeType * t);
+static void translate_stat(nodeType * t);
 static void translate_stat_list(nodeType * t);
 static void translate_direct_declarator(nodeType * t);
 static void translate_initializer_list(nodeType * t);
@@ -123,7 +124,7 @@ static void delIndentation() {
 	if (indentLevel == 0) {
 		printf("error, trying to undo indentation not possible\n");
 	}
-	indent[indentLevel--] = '\0';
+	indent[--indentLevel] = '\0';
 }
 
 static void translate_argument_exp_list(nodeType * t) {
@@ -215,6 +216,55 @@ static void translate_exp_stat(nodeType * t) {
 	translate_exp(t);
 }
 
+// iteration_stat				
+//               : WHILE '(' exp ')' stat							{$$ = opr(WHILE, 2, $3, $5);}
+// 							| DO stat WHILE '(' exp ')' ';'       {$$ = opr(DO_WHILE, 2, $2, $5);}
+// 							| FOR '(' exp ';' exp ';' exp ')' stat  {$$ = opr(FOR, 4, $3, $5, $7, $9);}
+// 							| FOR '(' id IN id ')' stat						{$$ = opr(FOR_IN, 3, $3, $5, $7);}
+// 							;
+static void translate_iteration_stat(nodeType *t){
+	printf("FOUND selection_stat\n");
+  if(t->type == typeOpr && t->opr.oper == WHILE_STAT && t->opr.nops == 2) {
+    nodeType * exp = t->opr.op[0];
+		nodeType * stat = t->opr.op[1];
+	
+		pybody_ind("while(");
+		translate_exp(exp);
+		pybody("):\n");
+		addIndentation();
+		translate_compound_stat(stat);
+		delIndentation();
+
+  }
+
+}
+
+static void translate_selection_stat(nodeType * t) {
+	printf("FOUND selection_stat\n");
+
+	if(t->type == typeOpr && t->opr.oper == IF_STAT && t->opr.nops == 3) {
+		nodeType * exp = t->opr.op[0]; 
+		nodeType * ifStat = t->opr.op[1];
+    nodeType * elseStat = t->opr.op[2];
+    
+		pybody_ind("if (");
+		translate_exp(exp);
+		pybody("):\n");
+		addIndentation();
+		translate_compound_stat(ifStat);
+		delIndentation();
+
+    if(elseStat != NULL){
+			pybody_ind("else:\n");
+      addIndentation();
+      translate_compound_stat(elseStat);
+			delIndentation();
+    }
+	}
+	
+}
+
+
 static void translate_jump_stat(nodeType * t) {
 	printf("FOUND jump_stat\n");
 	
@@ -242,8 +292,14 @@ static void translate_stat(nodeType * t){
 			case COMP_STAT:
 					translate_compound_stat(stat);
 				break;
+			case SEL_STAT:
+					translate_selection_stat(stat);
+				break;
 			case JUMP_STAT:
 					translate_jump_stat(stat);
+				break;
+      case ITER_STAT:
+					translate_iteration_stat(stat);
 				break;
 		}
 	}

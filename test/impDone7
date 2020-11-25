@@ -1,0 +1,15 @@
+string fun1(string a) {
+  return a;
+}
+
+int[] arr(int b) {
+  int[] a = [0, 1];
+  a[0] = b;
+  return a;
+}
+
+int main() {
+  int[] a = arr(1);
+  print(a);
+  return 0;
+}

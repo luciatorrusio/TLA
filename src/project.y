@@ -55,6 +55,7 @@
 %type <nPtr> shift_expression additive_exp mult_exp cast_exp unary_exp postfix_exp primary_exp argument_exp_list
 %type <nPtr> decl decl_list init_declarator direct_declarator initializer initializer_list
 %type <nPtr> param_decl_list param_decl type_qualifier init_def_declarator
+%type <nPtr> selection_stat iteration_stat
 
 
 %start program
@@ -122,7 +123,9 @@ function_declarator
 stat						
 							: exp_stat 											    	{$$ = opr(EXP_STAT, 1, $1);}
 							| compound_stat 									  	{$$ = opr(COMP_STAT, 1, $1);}
+							| selection_stat 											{$$ = opr(SEL_STAT, 1, $1);}
 							| jump_stat														{$$ = opr(JUMP_STAT, 1, $1);}
+              | iteration_stat											{$$ = opr(ITER_STAT, 1, $1);}
 							;
 exp_stat					
 							: exp ';'													    {$$ = $1;}
@@ -133,14 +136,25 @@ compound_stat
 							| '{' decl_list	'}'								  	{$$ = opr(COMP_STAT, 2, $2, NULL);}
 							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
 							;
-stat_list					
-							: stat     														{$$ = $1;}
-							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
+selection_stat				
+							: IF '(' exp ')' compound_stat 											{$$ = opr(IF_STAT, 3, $3, $5, NULL);}
+							| IF '(' exp ')' compound_stat ELSE compound_stat		{$$ = opr(IF_STAT, 3, $3, $5, $7);}
 							;
 jump_stat					
 							: RETURN exp ';'											{$$ = opr(RET, 1, $2);}
 							| RETURN ';'													{$$ = opr(RET, 0);}
 							;
+iteration_stat				
+              : WHILE '(' exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}
+							| DO compound_stat WHILE '(' exp ')' ';'       			{$$ = opr(DO_WHILE_STAT, 2, $2, $5);}
+							| FOR '(' exp ';' exp ';' exp ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
+							| FOR '(' id IN id ')' compound_stat	{$$ = opr(FOR_IN_STAT, 3, $3, $5, $7);}
+							;
+stat_list					
+							: stat     														{$$ = $1;}
+							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
+							;
+
 exp							
 							: assignment_exp											{$$ = $1;}
 							;

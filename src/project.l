@@ -19,7 +19,6 @@
 "if"																											{return IF;}
 "switch"																									{return SWITCH;}
 "else"																										{return ELSE;}
-"then"																										{return THEN;}
 "for"																											{return FOR;}
 "in"																											{return IN;}
 "do"																											{return DO;}
