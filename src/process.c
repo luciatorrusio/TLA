@@ -237,8 +237,8 @@ static void translate_iteration_stat(nodeType *t){
 
   }
   else if(t->type == typeOpr && t->opr.oper == DO_WHILE_STAT && t->opr.nops == 2) {
-    nodeType * exp = t->opr.op[1];
 		nodeType * stat = t->opr.op[0];
+    nodeType * exp = t->opr.op[1];
 
     translate_compound_stat(stat);
     pybody_ind("while(");
@@ -248,6 +248,25 @@ static void translate_iteration_stat(nodeType *t){
 		translate_compound_stat(stat);
 		delIndentation();
 
+  }
+  else if(t->type == typeOpr && t->opr.oper == FOR_STAT && t->opr.nops == 4) {
+		nodeType * initExp = t->opr.op[0];
+		nodeType * exp = t->opr.op[1];
+		nodeType * atLastExp = t->opr.op[2];
+		nodeType * stat = t->opr.op[3];
+
+		pybody_ind("");
+    translate_exp(initExp);
+		pybody("\n");
+    pybody_ind("while(");
+		translate_exp(exp);
+		pybody("):\n");
+		addIndentation();
+		translate_compound_stat(stat);
+		pybody_ind("");
+		translate_exp(atLastExp);
+		pybody("\n");
+		delIndentation();
   }
 
 
