@@ -270,6 +270,7 @@ static void translate_mult_exp(nodeType * t) {
 		nodeType * mop = t->opr.op[1];
 		nodeType * second = t->opr.op[2];
 
+		pybody("(");
 		translate_mult_exp(first);
 		switch (mop->mop.op)
 		{
@@ -284,6 +285,7 @@ static void translate_mult_exp(nodeType * t) {
 			break;
 		}
 		translate_unary_exp(second);
+		pybody(")");
 	}
 	else {
 		translate_unary_exp(t);
@@ -297,6 +299,7 @@ static void translate_additive_exp(nodeType * t) {
 		nodeType *first = t->opr.op[0];
 		nodeType *second = t->opr.op[2];
 		nodeType *op = t->opr.op[1];
+		pybody("(");
 		translate_mult_exp(first);
 		switch(op->mop.op){
 			case PLS:
@@ -306,7 +309,8 @@ static void translate_additive_exp(nodeType * t) {
 				pybody("-");
 			break;
 		}
-		translate_mult_exp(second);		
+		translate_mult_exp(second);
+		pybody(")");		
 	}
 	else {
 		translate_mult_exp(t);
@@ -319,6 +323,7 @@ static void translate_shift_exp(nodeType * t) {
 	if( t->type == typeOpr && t->opr.oper == SHI_EXP && t->opr.nops == 3){
 		nodeType *first = t->opr.op[0];
 		nodeType *second = t->opr.op[2];
+		pybody("(");
 		translate_mult_exp(first);
 		switch(t->mop.op){
 			case L_SHF:
@@ -328,7 +333,10 @@ static void translate_shift_exp(nodeType * t) {
 				pybody(">>");
 			break;
 		}
-		translate_shift_exp(second);		
+		pybody("int(");
+		translate_shift_exp(second);
+		pybody(")");	
+		pybody(")");	
 	}
 	else {
 		translate_additive_exp(t);
@@ -342,6 +350,7 @@ static void translate_relational_exp(nodeType *t){
 		nodeType *first = t->opr.op[0];
 		nodeType *second = t->opr.op[2];
 		nodeType *rel_const = t->opr.op[1];
+		pybody("int(");
 		translate_relational_exp(first);
 		switch (rel_const->mop.op)
 		{
@@ -359,7 +368,7 @@ static void translate_relational_exp(nodeType *t){
 			break;
 		}
 		translate_relational_exp(second);
-
+		pybody(")");
 	}
 	else {
 		translate_shift_exp(t);
