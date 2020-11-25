@@ -296,8 +296,9 @@ static void translate_additive_exp(nodeType * t) {
 	if( t->type == typeOpr && t->opr.oper == ADD_EXP && t->opr.nops == 3){
 		nodeType *first = t->opr.op[0];
 		nodeType *second = t->opr.op[2];
+		nodeType *op = t->opr.op[1];
 		translate_mult_exp(first);
-		switch(t->mop.op){
+		switch(op->mop.op){
 			case PLS:
 				pybody("+");
 			break;
