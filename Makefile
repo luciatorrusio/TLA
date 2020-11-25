@@ -12,7 +12,7 @@ INCLUDE=includes
 $(OUT): $(DEPS)
 	@mkdir -p $(TGT_CONTEXT)
 	lex -o $(TGT_CONTEXT)/lex.yy.c $(SRC_CONTEXT)/project.l
-	bison -b $(TGT_CONTEXT)/y -dy $(SRC_CONTEXT)/project.y
+	bison -b $(TGT_CONTEXT)/y -v -dy $(SRC_CONTEXT)/project.y
 	gcc -o $@ $(TGT_CONTEXT)/y.tab.c -I $(INCLUDE) $(SRC_CONTEXT)/process.c $(TGT_CONTEXT)/lex.yy.c -lfl -lm -g
 	#./a.out < inp
 

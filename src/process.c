@@ -23,10 +23,10 @@ static void translate_exp_stat(nodeType *t);
 static void translate_jump_stat(nodeType *t);
 static void translate_stat(nodeType *t);
 static void translate_stat_list(nodeType * t);
-static void translate_param_list(nodeType * t);
 static void translate_direct_declarator(nodeType * t);
 static void translate_initializer_list(nodeType * t);
 static void translate_initializer(nodeType * t);
+static void translate_init_def_declarator(nodeType * t);
 static void translate_init_declarator(nodeType * t);
 static void translate_decl(nodeType * t);
 static void translate_decl_list(nodeType * t);
@@ -124,22 +124,6 @@ static void delIndentation() {
 		printf("error, trying to undo indentation not possible\n");
 	}
 	indent[indentLevel--] = '\0';
-}
-
-static void translate_param_list(nodeType * t) {
-	printf("FOUND param_list\n");
-
-  if(t->type == typeOpr && t->opr.oper == PARAM_LIST && t->opr.nops == 2) {
-		printf("2 argumentos\n");
-		nodeType * list = t->opr.op[0];
-		nodeType * terminal = t->opr.op[1];
-		translate_param_list(list);
-    translate_assignment_exp(terminal);
-	}
-	else {
-		printf("0 argumentos\n");
-		translate_assignment_exp(t);
-	}
 }
 
 static void translate_argument_exp_list(nodeType * t) {
@@ -286,43 +270,34 @@ static void translate_decl(nodeType * t){
 	printf("FOUND decl\n");
 	
   if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
-		translate_init_declarator(t->opr.op[1]);
+		nodeType * type = t->opr.op[0];
+		nodeType * in = t->opr.op[1];
+		pybody_ind("");
+		if (type == NULL) {
+			translate_init_declarator(in);
+		}
+		else {
+			translate_init_def_declarator(in);
+		}
 	}
 }
 
 static void translate_direct_declarator(nodeType * t) {
 	printf("FOUND direct_declarator\n");
-	
-	if (t->type == typeId) {
-		pybody_ind("%s", t->ide.i);
-	}
-	else if(t->type == typeOpr) {
+
+	if(t->type == typeOpr && t->opr.oper == DIR_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
 		nodeType * p = t->opr.op[1];
 
-		pybody_ind("%s", id->ide.i);
+		pybody("%s", id->ide.i);
 
-		switch (t->opr.oper)
-		{
-		case DIR_DECL_E:
+		if (p != NULL) {
 			pybody("[");
 			translate_const_exp(p);
 			pybody("]");
-			break;
-
-		case DIR_DECL_ARR:
-			break;
-		case DIR_DECL_L:
-			pybody("(");
-			translate_param_list(p);
-			pybody(")");
-			break;
-		
-//		case DIR_DECL:
-//			pybody("()");
-//			break;
 		}
 	}
+
 }
 
 static void translate_initializer_list(nodeType * t) {
@@ -356,13 +331,29 @@ static void translate_initializer(nodeType * t) {
 	}
 }
 
+static void translate_init_def_declarator(nodeType * t){
+	printf("FOUND init_declarator\n");
+
+	if (t->type == typeOpr && t->opr.oper == INIT_DEF_DECL && t->opr.nops == 2) {
+		nodeType * id = t->opr.op[0];
+		nodeType * initializer = t->opr.op[1];
+
+		pybody("%s", id->ide.i);
+		if(initializer != NULL){
+			pybody(" = ");
+			translate_initializer(initializer);
+		}
+
+	}
+}
+
 static void translate_init_declarator(nodeType * t){
 	printf("FOUND init_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DECL && t->opr.nops == 2) {
 		nodeType * directDecl = t->opr.op[0];
 		nodeType * initializer = t->opr.op[1];
-
+		
 		translate_direct_declarator(directDecl);
 		
 		if (initializer != NULL) {
@@ -452,7 +443,6 @@ static void translate_function_declarator(nodeType * t) {
 static void translate_function_definition(nodeType * t) {
 	printf("FOUND function_definition\n");
 	if (t->opr.nops == 4) {
-		nodeType * type = t->opr.op[0];
 		nodeType * funName = t->opr.op[1];
 		nodeType * funDeclarator = t->opr.op[2];
 		nodeType * stmt = t->opr.op[3];

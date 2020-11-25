@@ -13,7 +13,7 @@
 	nodeType *opr(oper_types oper, int nops, ...);
 	nodeType *ide(identifierT iden);
 	nodeType *con(int value);
-	nodeType *typ(cTyp value);
+	nodeType *typ(cTyp value, bool arr);
 	void freeNode(nodeType *p);
 	int ex(nodeType *p);
 	int yylex(void);
@@ -53,115 +53,155 @@
 %type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list assignment_exp conditional_exp const_exp 
 %type <nPtr> logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp 
 %type <nPtr> shift_expression additive_exp mult_exp cast_exp unary_exp postfix_exp primary_exp argument_exp_list
-%type <nPtr> decl decl_list init_declarator direct_declarator param_list initializer initializer_list
-%type <nPtr> param_decl_list param_decl
+%type <nPtr> decl decl_list init_declarator direct_declarator initializer initializer_list
+%type <nPtr> param_decl_list param_decl type_qualifier init_def_declarator
+
 
 %start program
 
 %%
-program				: program_unit											  {root = opr(PROG, 1, $1);}
+program				
+              : program_unit											  {root = opr(PROG, 1, $1);}
 							;
-program_unit	: translation_unit										{$$ = $1;}
+program_unit	
+              : translation_unit										{$$ = $1;}
 							;
-translation_unit			: external_decl 							{$$ = $1;}						
+translation_unit			
+              : external_decl 							        {$$ = $1;}						
 							| translation_unit external_decl			{$$ = opr(TRANS_UNIT, 2, $1, $2);}
 							;
-external_decl				: function_definition						{$$ = opr(EXT_DECL, 1, $1);}
+external_decl				
+              : function_definition						      {$$ = opr(EXT_DECL, 1, $1);}
 							;
-function_definition			: type_const id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, typ($1), ide($2), $3, $4); }			
+function_definition			
+              : type_qualifier id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, $1, ide($2), $3, $4); }			
 							;
-decl						: type_const init_declarator ';'  {$$ = opr(DECL, 2, typ($1), $2);}
+decl						
+              : type_qualifier init_def_declarator ';'  {$$ = opr(DECL, 2, $1, $2);} 
+							| init_declarator ';'									{$$ = opr(DECL, 2, NULL, $1);}
 							;
-decl_list					: decl														{$$ = $1;}
+decl_list					
+              : decl														    {$$ = $1;}
 							| decl_list decl											{$$ = opr(DECL_LIST, 2, $1, $2);}
 							;
-init_declarator				: direct_declarator						{$$ = opr(INIT_DECL, 2, $1, NULL);}
-							| direct_declarator '=' initializer		{$$ = opr(INIT_DECL, 2, $1, $3);}
+init_def_declarator				
+              : id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
+							| id '=' initializer									{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);}
 							;
-
-direct_declarator			: id 													{$$ = ide($1);}						
-							| id '[' const_exp ']'								{$$ = opr(DIR_DECL_E, 2, $1, $3);}		
-							| id '[' ']'													{$$ = opr(DIR_DECL_ARR, 1, ide($1));}	
-							| id '(' param_list ')' 							{$$ = opr(DIR_DECL_L, 2, ide($1), $3);}
-//							| id '('	')' 							  			{$$ = opr(DIR_DECL, 1, ide($1));}
+init_declarator				
+							: direct_declarator '=' initializer		{$$ = opr(INIT_DECL, 2, $1, $3);}
+							;
+direct_declarator						
+							: id																	{$$ = opr(DIR_DECL, 2, ide($1), NULL);}
+							| id '[' const_exp ']'								{$$ = opr(DIR_DECL, 2, ide($1), $3);}		
 							; 
-param_list					: assignment_exp								{$$ = $1;}
-							| param_list ',' assignment_exp				{$$ = opr(PARAM_LIST, 2, $1, $3);}
-							;
-initializer					: assignment_exp								{$$ = $1;}
+initializer					
+              : assignment_exp								      {$$ = $1;}
 							| '[' initializer_list ']'						{$$ = opr(INIT_LIST, 1, $2);}
 							| '[' initializer_list ',' ']'				{$$ = opr(INIT_LIST, 1, $2);}
 							;
-initializer_list			: initializer									{$$ = $1;}
+initializer_list			
+							: initializer									        {$$ = $1;}
 							| initializer_list ',' initializer		{$$ = opr(INIT_LIST, 2, $1, $3);}
 							;
-param_decl_list				: param_decl									{$$ = $1;}
+param_decl_list				
+              : param_decl													{$$ = $1;}
 							| param_decl_list ',' param_decl			{$$ = opr(PARAM_DECL_LIST, 2, $1, $3);}
 							;
-param_decl			: type_const direct_declarator			{$$ = opr(PARAM_DECL, 2, typ($1), $2);}
+param_decl			
+							: type_qualifier direct_declarator		{$$ = opr(PARAM_DECL, 2, $1, $2);}
 							;
-function_declarator	: '(' param_decl_list ')'				{$$ = opr(FUNC_DEC, 1, $2);}
+type_qualifier     
+							: type_const											    {$$ = typ($1, false);}
+							| type_const '[' ']'								  {$$ = typ($1, true);}
+							;
+function_declarator	
+							: '(' param_decl_list ')'				      {$$ = opr(FUNC_DEC, 1, $2);}
 							| '(' ')'															{$$ = opr(FUNC_DEC, 0);}
 							;
-stat						: exp_stat 											  	{$$ = opr(EXP_STAT, 1, $1);}
+stat						
+							: exp_stat 											    	{$$ = opr(EXP_STAT, 1, $1);}
 							| compound_stat 									  	{$$ = opr(COMP_STAT, 1, $1);}
 							| jump_stat														{$$ = opr(JUMP_STAT, 1, $1);}
 							;
-exp_stat					: exp ';'													{$$ = $1;}
+exp_stat					
+							: exp ';'													    {$$ = $1;}
 							;
-compound_stat				:  '{' decl_list stat_list '}'  {$$ = opr(COMP_STAT, 2, $2, $3);}					
-							 | '{' stat_list '}'									{$$ = opr(COMP_STAT, 2, NULL, $2);}
-							 | '{' decl_list	'}'									{$$ = opr(COMP_STAT, 2, $2, NULL);}
-							 | '{' '}'														{$$ = opr(COMP_STAT, 0);}
+compound_stat				
+							: '{' decl_list stat_list '}'         {$$ = opr(COMP_STAT, 2, $2, $3);}					
+							| '{' stat_list '}'									  {$$ = opr(COMP_STAT, 2, NULL, $2);}
+							| '{' decl_list	'}'								  	{$$ = opr(COMP_STAT, 2, $2, NULL);}
+							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
 							;
-stat_list					: stat     												{$$ = $1;}
+stat_list					
+							: stat     														{$$ = $1;}
 							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
 							;
-jump_stat					: RETURN exp ';'									{$$ = opr(RET, 1, $2);}
+jump_stat					
+							: RETURN exp ';'											{$$ = opr(RET, 1, $2);}
 							| RETURN ';'													{$$ = opr(RET, 0);}
 							;
-exp							: assignment_exp										{$$ = $1;}
+exp							
+							: assignment_exp											{$$ = $1;}
 							;
-assignment_exp				: conditional_exp							{$$ = $1;}	
+assignment_exp				
+							: conditional_exp											{$$ = $1;}	
 							;
-conditional_exp				: logical_or_exp							{$$ = $1;}
+conditional_exp				
+							: logical_or_exp											{$$ = $1;}
 							;	
-const_exp					: conditional_exp                 {$$ = $1;}
+const_exp					
+							: conditional_exp                 		{$$ = $1;}
 							;
-logical_or_exp				: logical_and_exp             {$$ = $1;}
+logical_or_exp				
+							: logical_and_exp             				{$$ = $1;}
 							;
-logical_and_exp				: inclusive_or_exp          	{$$ = $1;}
+logical_and_exp				
+							: inclusive_or_exp          					{$$ = $1;}
 							;
-inclusive_or_exp			: exclusive_or_exp						{$$ = $1;}
+inclusive_or_exp			
+							: exclusive_or_exp										{$$ = $1;}
 							;
-exclusive_or_exp			: and_exp											{$$ = $1;}
+exclusive_or_exp			
+							: and_exp															{$$ = $1;}
 							;
-and_exp						: equality_exp										{$$ = $1;}
+and_exp						
+							: equality_exp												{$$ = $1;}
 							;
-equality_exp				: relational_exp								{$$ = $1;}
+equality_exp				
+							: relational_exp											{$$ = $1;}
 							; 
-relational_exp				: shift_expression						{$$ = $1;}
+relational_exp				
+							: shift_expression										{$$ = $1;}
 							;
-shift_expression			: additive_exp								{$$ = $1;}
+shift_expression			
+							: additive_exp												{$$ = $1;}
 							;
-additive_exp				: mult_exp											{$$ = $1;}
+additive_exp				
+							: mult_exp														{$$ = $1;}
 							;
-mult_exp					: cast_exp												{$$ = $1;}
+mult_exp					
+							: cast_exp														{$$ = $1;}
 							;
-cast_exp					: unary_exp												{$$ = $1;}
+cast_exp					
+							: unary_exp														{$$ = $1;}
 							;
-unary_exp					: postfix_exp											{$$ = $1;}				
+unary_exp					
+							: postfix_exp													{$$ = $1;}				
 							;
-postfix_exp					: primary_exp 		          		{$$ = $1;}				
+postfix_exp					
+							: primary_exp 		          					{$$ = $1;}				
 							| id '(' argument_exp_list ')'				{$$ = opr(POST_EXP, 2, ide($1), $3);} 
 							|	id '(' ')'													{$$ = opr(POST_EXP, 2, ide($1), NULL);}
 							;
-primary_exp					: id 														{$$ = ide($1);}
+primary_exp					
+							: id 																	{$$ = ide($1);}
 							| int_const														{$$ = con($1);}
 							| string 															{$$ = str($1);}
 							| '(' exp ')'													{$$ = $2;}
 							;
-argument_exp_list			: assignment_exp							{$$ = $1;}
+argument_exp_list			
+							: assignment_exp											{$$ = $1;}
 							| argument_exp_list ',' assignment_exp	{$$ = opr(ARG_EXP_LIST, 2, $1, $3);}
 							;
 %%
@@ -221,7 +261,7 @@ nodeType *opr(oper_types oper, int nops, ...) {
 	return p;
 }
 
-nodeType *typ(cTyp value) {
+nodeType *typ(cTyp value, bool arr) {
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -229,6 +269,7 @@ nodeType *typ(cTyp value) {
 	/* copy information */
 	p->type = typeTyp;
 	p->typ.t = value;
+	p->typ.arr = arr;
 	return p;
 }
 

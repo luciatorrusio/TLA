@@ -1,6 +1,8 @@
 #ifndef _PROJECT_H
 #define _PROJECT_H
 
+#include <stdbool.h>
+
 typedef enum { typeCon, typeStr, typeId, typeOpr, typeTyp } nodeEnum;
 
 typedef enum { voidTyp, intTyp, stringTyp, floatTyp } cTyp;
@@ -9,7 +11,7 @@ typedef enum { voidTyp, intTyp, stringTyp, floatTyp } cTyp;
 typedef enum {TRANS_UNIT, FUNC_DEF, FUNC_DEC, COMP_STAT, JUMP_STAT, 
               STAT_LIST, RET, POST_EXP, ARG_EXP_LIST, HEAD, EXT_DECL, 
               PROG, EXP_STAT, DECL_LIST, DECL, INIT_DECL, INIT_DECL_LIST, 
-              DIR_DECL_E, DIR_DECL_L, DIR_DECL, PARAM_LIST, DIR_DECL_ARR, 
+              DIR_DECL, INIT_DEF_DECL,
               INIT_LIST, PARAM_DECL, PARAM_DECL_LIST } oper_types; 
 
 #define STRING_MAX_SIZE 256
@@ -42,6 +44,7 @@ typedef struct {
 /* type */
 typedef struct {
     cTyp t;                   /* operator */
+    bool arr;
 } typNodeType;
 
 typedef struct nodeTypeTag {
