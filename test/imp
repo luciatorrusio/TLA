@@ -1,5 +1,9 @@
 int main() {
-  for(1; 1; 1) {
-    print("No dejo de imprimir !");
+  int[] a = [0, 1, 2];
+
+  for (int b in a) {
+    print(b);
   }
+
+  return 0;
 }

@@ -7,4 +7,6 @@ int main() {
     print("Inside else statement");
   }
   print("outside");
+  
+  return 0;
 }

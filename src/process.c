@@ -268,6 +268,16 @@ static void translate_iteration_stat(nodeType *t){
 		pybody("\n");
 		delIndentation();
   }
+  else if(t->type == typeOpr && t->opr.oper == FOR_IN_STAT && t->opr.nops == 4){
+		nodeType * el = t->opr.op[1];
+		nodeType * arr = t->opr.op[2];
+		nodeType * stat = t->opr.op[3];
+
+		pybody_ind("for %s in %s:\n", el->ide.i, arr->ide.i);
+		addIndentation();
+		translate_compound_stat(stat);
+		delIndentation();
+  } 
 
 
 }

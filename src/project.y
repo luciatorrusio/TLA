@@ -148,7 +148,7 @@ iteration_stat
               : WHILE '(' exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}
 							| DO compound_stat WHILE '(' exp ')' ';'       			{$$ = opr(DO_WHILE_STAT, 2, $2, $5);}
 							| FOR '(' exp ';' exp ';' exp ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
-							| FOR '(' id IN id ')' compound_stat	{$$ = opr(FOR_IN_STAT, 3, $3, $5, $7);}
+							| FOR '(' type_const id IN id ')' compound_stat			{$$ = opr(FOR_IN_STAT, 4, $3, ide($4), ide($6), $8);}
 							;
 stat_list					
 							: stat     														{$$ = $1;}

@@ -1,5 +1,5 @@
 int main() {
-  while(1) {
+  for(1; 1; 1) {
     print("No dejo de imprimir !");
   }
   
