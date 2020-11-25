@@ -148,7 +148,7 @@ iteration_stat
               : WHILE '(' exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}
 							| DO compound_stat WHILE '(' exp ')' ';'       			{$$ = opr(DO_WHILE_STAT, 2, $2, $5);}
 							| FOR '(' exp ';' exp ';' exp ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
-							| FOR '(' type_const id IN id ')' compound_stat			{$$ = opr(FOR_IN_STAT, 4, $3, ide($4), ide($6), $8);}
+							| FOR '(' type_const id IN id ')' compound_stat			{$$ = opr(FOR_IN_STAT, 4, typ($3, false), ide($4), ide($6), $8);}
 							;
 stat_list					
 							: stat     														{$$ = $1;}
@@ -302,10 +302,14 @@ int main()
 {
     yyparse();
 
-		if (!success)
+		if (!success) {
+			freeNode(root);
 			return -1;
+		}
 
 		processTree(root, &success);
+
+		freeNode(root);
 
     if(success)
     	printf("Parsing Successful\n");
@@ -318,5 +322,6 @@ void yyerror(char *msg)
 	extern int yylineno;
 	printf("Parsing Failed\nLine Number: %d %s\n",yylineno,msg);
 	success = false;
+	freeNode(root);
 }
 

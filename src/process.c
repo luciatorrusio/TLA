@@ -94,6 +94,7 @@ static void prefixPrint(nodeType * t, int depth) {
 			printf("%soper: %d\n", prefIndent, t->opr.oper);
 			printf("%snops: %d\n", prefIndent, t->opr.nops);
 			for (unsigned int i = 0; i < t->opr.nops; i++) {
+				printf("%sop n-%d\n", prefIndent, i);
 				prefixPrint(t->opr.op[i], depth+1);
 			}
 			break;
@@ -604,7 +605,6 @@ static void checkTypes(nodeType * t, bool * checked){
 }
 
 void processTree(nodeType * root, bool * success) {
-	
 	prefixPrint(root, 0);
 
 	bool checked = true;
