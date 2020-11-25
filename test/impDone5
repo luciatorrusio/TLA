@@ -3,8 +3,7 @@ string fun1(string a) {
 }
 
 int main() {
-  string b = "Puede ser, pa?";
-  string a = fun1(b);
+  string a = fun1("Hola Mundo");
   print(a);
   return 0;
 }

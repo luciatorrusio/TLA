@@ -1,0 +1,10 @@
+string fun1() {
+  string a = "Esta es la funcion 1";
+  return a;
+}
+
+int main() {
+  string a = fun1();
+  print(a);
+  return 0;
+}

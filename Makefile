@@ -12,8 +12,8 @@ INCLUDE=includes
 $(OUT): $(DEPS)
 	@mkdir -p $(TGT_CONTEXT)
 	lex -o $(TGT_CONTEXT)/lex.yy.c $(SRC_CONTEXT)/project.l
-	bison --report=state -b $(TGT_CONTEXT)/y -dy $(SRC_CONTEXT)/project.y
-	gcc -o $@ $(TGT_CONTEXT)/y.tab.c -I $(INCLUDE) $(SRC_CONTEXT)/process.c $(TGT_CONTEXT)/lex.yy.c -lfl -lm -g -fsanitize=address
+	bison -b $(TGT_CONTEXT)/y -dy $(SRC_CONTEXT)/project.y
+	gcc -o $@ $(TGT_CONTEXT)/y.tab.c -I $(INCLUDE) $(SRC_CONTEXT)/process.c $(TGT_CONTEXT)/lex.yy.c -lfl -lm -g
 	#./a.out < inp
 
 run: $(OUT) $(TEST_OUT)
