@@ -236,6 +236,20 @@ static void translate_iteration_stat(nodeType *t){
 		delIndentation();
 
   }
+  else if(t->type == typeOpr && t->opr.oper == DO_WHILE_STAT && t->opr.nops == 2) {
+    nodeType * exp = t->opr.op[1];
+		nodeType * stat = t->opr.op[0];
+
+    translate_compound_stat(stat);
+    pybody_ind("while(");
+		translate_exp(exp);
+		pybody("):\n");
+		addIndentation();
+		translate_compound_stat(stat);
+		delIndentation();
+
+  }
+
 
 }
 
