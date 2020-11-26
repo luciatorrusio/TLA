@@ -1,8 +1,8 @@
-def main():
-	while(1):
-		print("No dejo de imprimir !")
-		return 0
+def hola(a):
+  print("Soy hola(a)")
 
-	return 0
+def hola(a, b):
+  print("Soy hola(a, b)")
 
-main()
+hola(1)
+hola(1,2)

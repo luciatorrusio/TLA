@@ -7,14 +7,22 @@
 #include <project.h>
 #include <translate.h>
 
+static void pre_load_native_functions();
 static void check_libraries(nodeType * t);
 static void check_types(nodeType * t, bool * checked);
 
-static void check_libraries(nodeType * t){
+// Global functions hashmap
+// static Hashmap<String, struct function_info> functions_defs;
+
+static void pre_load_native_functions() {
+
+}
+
+static void check_libraries(nodeType * t) {
   
 }
 
-static void check_types(nodeType * t, bool * checked){
+static void check_types(nodeType * t, bool * checked) {
   
 }
 
@@ -23,6 +31,7 @@ void process_tree(nodeType * root, bool * success) {
 
 	bool checked = true;
 
+	pre_load_native_functions();
 	check_libraries(root);
 	check_types(root, &checked);
 

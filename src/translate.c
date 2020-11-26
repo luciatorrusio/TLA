@@ -752,23 +752,6 @@ static void translate_init_def_declarator(nodeType * t){
 	}
 }
 
-static void translate_decl_list(nodeType * t){
-	fprintf(stderr, "FOUND decl_list\n");
-
-	if(t->type == typeOpr && t->opr.oper == DECL_LIST && t->opr.nops == 2) {
-		fprintf(stderr, "2 argumentos\n");
-    nodeType * decl_list = t->opr.op[0];
-		nodeType * decl = t->opr.op[1];
-    translate_decl_list(decl_list);
-    translate_decl(decl);
-  }
-	else {
-		fprintf(stderr, "0 argumentos\n");
-		translate_decl(t);
-	}
-	pybody("\n");
-}
-
 static void translate_compound_stat(nodeType * t) {
 	fprintf(stderr, "FOUND compound_stat\n");
 
