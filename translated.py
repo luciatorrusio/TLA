@@ -1,5 +1,15 @@
+def factorial(x):
+	resp = 1
+	i = 1
+	while(int(i<=x)):
+		resp = (resp*i)
+		i = (i+1)
+
+	return resp
+
 def main():
-	var = int((1*5)<2)
+	var = factorial((5%10))
+	print("Resultado:")
 	print(var)
 	return 0
 
