@@ -354,10 +354,17 @@ static void check_libraries(nodeType * t) {
 static struct var_info * allocated_symbols = NULL;
 
 // Current symbols used
-static struct var_info * current_symbols = NULL;
+static int * used_symbols_amounts;
+
+struct restorable_symbol {
+	struct var_info * s;
+	struct restorable_symbol * next;
+};
 
 // Symbols to be restored after current context finish
-static struct var_info * to_restore_symbols = NULL;
+static struct restorable_symbol * to_restore_symbols = NULL;
+
+static int * to_restore_symbols_amounts;
 
 static void init_symbols_h() {
 	functions_h = kh_init(functions_table); // create a hashtable
@@ -367,11 +374,107 @@ KHASH_MAP_INIT_STR(symbols_table, struct var_info *);
 
 khash_t(symbols_table) * symbols_h;
 
+/*
+	-- CHECK ASSIGNMENT AND ADD TO HASHTABLE --
+	decl						
+              : type_qualifier init_def_declarator ';'  {$$ = opr(DECL, 2, $1, $2);} // Add type_qualifier to hashtable and check init_def_declarator
+							;
+
+	-- CHECK ASSIGNMENTS --
+
+	init_def_declarator				
+								: id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
+								| id '=' const_exp										{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);} // Check const_exp is of type (id Type)
+								; 
+	assignment_exp				
+							: const_exp														{$$ = $1;}
+							| id '=' const_exp										{$$ = opr(ASS_EXP, 3, ide($1), NULL, $3);} 			// Check id type is const_exp type
+							| arr_exp '=' const_exp								{$$ = opr(ASS_EXP_A, 3, $1, NULL, $3);}					// Check id type (without accounting array - dereferenced) is const_exp type
+							| id ass_eq const_exp 								{$$ = opr(ASS_EXP, 3, ide($1), mop($2), $3);}		// Check id type is int or float
+							| arr_exp ass_eq const_exp						{$$ = opr(ASS_EXP_A, 3, $1, mop($2), $3);}			// Check id type is int[] or float[]
+							| id inc_dec_const  									{$$ = opr(ASS_EXP, 3, ide($1), mop($2), NULL);} // Check id type is int or float
+							| arr_exp inc_dec_const								{$$ = opr(ASS_EXP_A, 3, $1, mop($2), NULL);} 		// Check id type is int[] or float[]
+							;
+	arr_exp
+							: id '[' conditional_exp ']' 					{$$ = opr(ARR_EXP, 2, ide($1), $3);}
+							;
+
+	-- CHECK OPERATIONS --
+
+	logical_or_exp				
+							: logical_and_exp             				{$$ = $1;}
+							| logical_or_exp or_const logical_and_exp	{$$ = opr(LOG_OR_EXP, 3, $1, mop(LOG_OR), $3);} // Check inclusive_or_exp and logical_and_exp are int
+							;
+	logical_and_exp				
+								: inclusive_or_exp          					{$$ = $1;}
+								| logical_and_exp and_const inclusive_or_exp	{$$ = opr(LOG_AND_EXP, 3, $1, mop(LOG_AND), $3);} // Check logical_and_exp and inclusive_or_exp are int
+								;
+	inclusive_or_exp			
+								: exclusive_or_exp										{$$ = $1;}
+								| inclusive_or_exp '|' exclusive_or_exp	{$$ = opr(OR_EXP, 3, $1, mop(OR), $3);} // Check inclusive_or_exp and exclusive_or_exp are int
+								;
+	exclusive_or_exp			
+								: and_exp															{$$ = $1;}
+								| exclusive_or_exp '^' and_exp				{$$ = opr(EXCL_OR_EXP, 3, $1, mop(EXCL_OR), $3);} // Check exclusive_or_exp and and_exp are int
+								;
+	and_exp						
+								: equality_exp												{$$ = $1;}
+								| and_exp '&' equality_exp 						{$$ = opr(AND_EXP, 3, $1, mop(AND), $3);} // Check and_exp and equality_exp are int
+								;
+	equality_exp				
+								: relational_exp											{$$ = $1;}
+								| equality_exp eq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop($2), $3);} // Check equality_exp and relational_exp are int/float (in case of variables) // Could be more.. but not for now
+								; 
+	relational_exp				
+								: shift_exp									            {$$ = $1;}
+								| relational_exp '<' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(L_THAN), $3 );} // Check relational_exp and shift_exp are int/float (in case of variables)
+								| relational_exp '>' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(G_THAN), $3 );} // Check relational_exp and shift_exp are int/float (in case of variables)
+								| relational_exp rel_const shift_exp    {$$ = opr(REL_EXP, 3, $1, mop($2) , $3);} // Check relational_exp and shift_exp are int/float (in case of variables)
+								;
+	shift_exp			
+								: additive_exp													{$$ = $1;}
+								| shift_exp shift_const additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop($2), $3);} // Check shift_exp and additive_exp are int
+								;
+	additive_exp				
+								: mult_exp														{$$ = $1;}
+								| additive_exp '+' mult_exp           {$$ = opr(ADD_EXP, 3, $1, mop(PLS), $3);} // Check additive_exp and mult_exp are int/float (in case of variables)
+								| additive_exp '-' mult_exp           {$$ = opr(ADD_EXP, 3, $1, mop(MNS), $3);} // Check additive_exp and mult_exp are int/float (in case of variables)
+								;
+	mult_exp					
+								: unary_exp														{$$ = $1;}
+								| mult_exp '*' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(AST), $3);} // Check mult_exp and unary_exp are int/float (in case of variables)
+								| mult_exp '/' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(DIV), $3);} // Check mult_exp and unary_exp are int/float (in case of variables)
+								| mult_exp '%' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(MOD), $3);} // Check mult_exp and unary_exp are int
+								;
+	unary_exp			
+								: postfix_exp													{$$ = $1;}
+								| unary_operator unary_exp						{$$ = opr(UNARY_EXP_OP, 2, $1, $2);}  // Check unary_exp is int
+								;
+	unary_operator				
+								: '&' 																{$$ = mop(AMP);}
+								| '-'                                 {$$ = mop(MNS);}
+								| '~'                                 {$$ = mop(TIL);}
+								| '!' 				                        {$$ = mop(NEG);}
+								;
+
+	arr_exp
+							: id '[' conditional_exp ']' 					{$$ = opr(ARR_EXP, 2, ide($1), $3);} // Check conditional is int
+							;
+
+
+	-- Check functions params --
+	postfix_exp					
+							: primary_exp 		          					{$$ = $1;}			
+							| arr_exp															{$$ = opr(POST_EXP, 1, $1);}
+							| id '(' argument_exp_list ')'				{$$ = opr(POST_EXP, 2, ide($1), $3);} // Check id function params match
+							|	id '(' ')'													{$$ = opr(POST_EXP, 2, ide($1), NULL);} // Check id function params match
+							;							
+*/
 static void check_types_rec(nodeType * t, bool * checked) {
 	int ret, is_missing;
 	khiter_t k;
 
-
+	if ()
 }
 
 static void check_types(nodeType * t, bool * checked) {
@@ -393,7 +496,14 @@ static void delete_allocated_functions(void) {
 		curr = prev->next;
 		if (prev != NULL) {
 			if (prev->params.amount > 0 && prev->params.params != NULL) {
-				free(prev->params.params);
+				paramNode * n_curr = prev->params.params;
+				paramNode * n_prev = n_curr;
+
+				while (n_prev != NULL) {
+					curr = prev->next;
+					free(prev);
+					prev = curr;
+				}
 			}
 			free(prev);
 		}
