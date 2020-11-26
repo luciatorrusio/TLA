@@ -240,6 +240,7 @@ argument_exp_list
 #define SIZEOF_NODETYPE ((char *)&p->con - (char *)p)
 
 nodeType *str(stringT s) {
+	extern int yylineno;
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -247,11 +248,13 @@ nodeType *str(stringT s) {
 	/* copy information */
 	p->parent = NULL;
 	p->type = typeStr;
+	p->line = yylineno;
 	strcpy(p->str.s, s);
 	return p;
 }
 
 nodeType *con(int value) {
+	extern int yylineno;
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -260,10 +263,12 @@ nodeType *con(int value) {
 	p->parent = NULL;
 	p->type = typeCon;
 	p->con.value = value;
+	p->line = yylineno;
 	return p;
 }
 
 nodeType *ide(identifierT iden) {
+	extern int yylineno;
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -271,11 +276,13 @@ nodeType *ide(identifierT iden) {
 	/* copy information */
 	p->parent = NULL;
 	p->type = typeId;
+	p->line = yylineno;
 	strcpy(p->ide.i, iden);
 	return p;
 	} 
 
 nodeType *opr(oper_types oper, int nops, ...) {
+	extern int yylineno;
 	va_list ap;
 	nodeType *p;
 	int i;
@@ -291,12 +298,14 @@ nodeType *opr(oper_types oper, int nops, ...) {
 	p->opr.nops = nops;
 	va_start(ap, nops);
 	for (i = 0; i < nops; i++)
-	p->opr.op[i] = va_arg(ap, nodeType*);
+		p->opr.op[i] = va_arg(ap, nodeType*);
 	va_end(ap);
+	p->line = yylineno;
 	return p;
 }
 
 nodeType *typ(cTyp value, bool arr) {
+	extern int yylineno;
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -306,10 +315,12 @@ nodeType *typ(cTyp value, bool arr) {
 	p->type = typeTyp;
 	p->typ.t = value;
 	p->typ.arr = arr;
+	p->line = yylineno;
 	return p;
 }
 
 nodeType *mop(mathOp op) {
+	extern int yylineno;
 	nodeType *p;
 	/* allocate node */
 	if ((p = malloc(sizeof(nodeType))) == NULL)
@@ -318,6 +329,7 @@ nodeType *mop(mathOp op) {
 	p->parent = NULL;
 	p->type = typeMop;
 	p->mop.op = op;
+	p->line = yylineno;
 	return p;
 }
 

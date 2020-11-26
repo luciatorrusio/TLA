@@ -71,6 +71,8 @@ typedef struct nodeTypeTag {
         typNodeType typ;
         mathOpNodeType mop;
     };
+
+    int line;
 } nodeType;
 
 extern int sym[26];
