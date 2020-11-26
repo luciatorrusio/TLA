@@ -1,19 +1,7 @@
-int factorial(int x) {
-  int resp = 1;
-  int i = 1;
-  while(i <= x) {
-    resp = resp * i;
-    i = i + 1;
-  }
-
-  return resp;
-}
+#include "pruebas_py/load_image"
+#include "pruebas_py/show_image"
 
 int main() {
-  int var = factorial(5 % 10);
-  
-  print("Resultado:");
-  print(var);
-
-  return 0;
+  img im = load_image("pruebas_py/image.jpg");
+  show_image(im);
 }

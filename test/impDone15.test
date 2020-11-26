@@ -12,8 +12,7 @@ int factorial(int x) {
 int main() {
   int var = factorial(5 % 10);
   
-  print("Resultado:");
-  print(var);
+  print("Resultado:", var);
 
   return 0;
 }

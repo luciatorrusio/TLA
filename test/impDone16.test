@@ -1,0 +1,14 @@
+int main() {
+  int luciaGRANDE = 3 && 5;
+  int luciaCHIQUITITO = 0 || 1;
+  int lucia = (3 && 0) || 1;
+  int a = 2 & 1;
+  int b = 3 | 4;
+  int c = b ^ 0;
+  int d = 1 << 10;
+  int e = 1024 >> 10;
+  
+  print(luciaGRANDE, luciaCHIQUITITO, lucia, a, b, c, d, e);
+
+  return 0;
+}

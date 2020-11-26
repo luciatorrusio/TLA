@@ -39,7 +39,7 @@
 // %token int_const float_const id string type_const DEFINE
 %token DEFINE IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC
 %token or_const and_const eq_const neq_const shift_const_l shift_const_r rel_const_l rel_const_g inc_const
-%token param_const ELSE HEADER
+%token param_const ELSE
 %left '+' '-'
 %left '*' '/'
 %nonassoc THEN
@@ -47,7 +47,7 @@
 //%define parse.error verbose
 
 %token <cType> type_const
-%token <sArr> string float_const
+%token <sArr> string float_const HEADER
 %token <iValue> int_const
 %token <ident> id
 
@@ -65,9 +65,10 @@
 %%
 program				
               : program_unit											  {root = opr(PROG, 1, $1);}
-							;
+							; 
 program_unit	
               : translation_unit										{$$ = $1;}
+							| HEADER program_unit									{$$ = opr(PROG_HEADER, 2, str($1), $2);}
 							;
 translation_unit			
               : external_decl 							        {$$ = $1;}						
@@ -132,10 +133,16 @@ stat
 exp_stat					
 							: exp ';'													    {$$ = $1;}
 							;
+//decl_stat_list
+//							: decl_list decl_stat_list						{$$ = opr(DECL_STAT_LIST, 3, $2, $1, NULL);}
+//							| stat_list decl_stat_list						{$$ = opr(DECL_STAT_LIST, 3, $2, NULL, $1);}
+//							| decl_list														{$$ = opr(DECL_STAT_LIST, 3, NULL, $1, NULL);}
+//							| stat_list														{$$ = opr(DECL_STAT_LIST, 3, NULL, NULL, $1);}
+//							;
 compound_stat				
-							: '{' decl_list stat_list '}'         {$$ = opr(COMP_STAT, 2, $2, $3);}					
-							| '{' stat_list '}'									  {$$ = opr(COMP_STAT, 2, NULL, $2);}
-							| '{' decl_list	'}'								  	{$$ = opr(COMP_STAT, 2, $2, NULL);}
+							: '{' decl_list stat_list '}'         {$$ = opr(COMP_STAT, 2, $2, $3);}
+							| '{' decl_list '}'         					{$$ = opr(COMP_STAT, 2, $2, NULL);}
+							| '{' stat_list '}'         					{$$ = opr(COMP_STAT, 2, NULL, $2);}
 							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
 							;
 selection_stat				
@@ -149,7 +156,7 @@ jump_stat
 iteration_stat				
               : WHILE '(' exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}
 							| DO compound_stat WHILE '(' exp ')' ';'       			{$$ = opr(DO_WHILE_STAT, 2, $2, $5);}
-							| FOR '(' exp ';' exp ';' exp ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
+							| FOR '(' init_declarator ';' conditional_exp ';' init_declarator ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
 							| FOR '(' type_const id IN id ')' compound_stat			{$$ = opr(FOR_IN_STAT, 4, typ($3, false), ide($4), ide($6), $8);}
 							;
 stat_list					
@@ -161,29 +168,36 @@ exp
 							: const_exp														{$$ = $1;}
 							;
 const_exp					
-							: conditional_exp                 		{$$ = $1;}
-							| non_operable_exp										{$$ = $1;}
+							: conditional_exp                 		{$$ = opr(CONST_EXP_C, 1, $1);}
+							| non_operable_exp										{$$ = opr(CONST_EXP_N, 1, $1);}
 							;
 conditional_exp
 							: logical_or_exp											{$$ = $1;}
 							;
 logical_or_exp				
 							: logical_and_exp             				{$$ = $1;}
+							| logical_or_exp or_const logical_and_exp	{$$ = opr(LOG_OR_EXP, 3, $1, mop(LOG_OR), $3);}
 							;
 logical_and_exp				
 							: inclusive_or_exp          					{$$ = $1;}
+							| logical_and_exp and_const inclusive_or_exp	{$$ = opr(LOG_AND_EXP, 3, $1, mop(LOG_AND), $3);}
 							;
 inclusive_or_exp			
 							: exclusive_or_exp										{$$ = $1;}
+							| inclusive_or_exp '|' exclusive_or_exp	{$$ = opr(OR_EXP, 3, $1, mop(OR), $3);}
 							;
 exclusive_or_exp			
 							: and_exp															{$$ = $1;}
+							| exclusive_or_exp '^' and_exp				{$$ = opr(EXCL_OR_EXP, 3, $1, mop(EXCL_OR), $3);}
 							;
 and_exp						
 							: equality_exp												{$$ = $1;}
+							| and_exp '&' equality_exp 						{$$ = opr(AND_EXP, 3, $1, mop(AND), $3);}
 							;
 equality_exp				
 							: relational_exp											{$$ = $1;}
+							| equality_exp eq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop(EQ), $3);}
+							| equality_exp neq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop(NEQ), $3);}
 							; 
 relational_exp				
 							: shift_exp									            {$$ = $1;}
@@ -214,8 +228,6 @@ unary_exp
 							;
 unary_operator				
 							: '&' 																{$$ = mop(AMP);}
-							| '*'                                 {$$ = mop(AST);}
-							| '+'                                 {$$ = mop(PLS);}
 							| '-'                                 {$$ = mop(MNS);}
 							| '~'                                 {$$ = mop(TIL);}
 							| '!' 				                        {$$ = mop(NEG);}

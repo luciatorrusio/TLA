@@ -1,7 +1,8 @@
 int main() {
-  for(1; 1; 1) {
+  int a;
+
+  for(a = 1; a < 2; a = a + 1) {
     print("No dejo de imprimir !");
-    return 0;
   }
   
   return 0;

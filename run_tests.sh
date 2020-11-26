@@ -11,6 +11,6 @@ for x in test/*.test; do
   ./target/compiler < $x 2> /dev/null
   echo "Running $x"
   echo ""
-  python translated.py
+  python3 translated.py
   echo ""
 done

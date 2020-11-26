@@ -7,14 +7,16 @@ typedef enum { typeCon, typeStr, typeId, typeOpr, typeTyp, typeMop } nodeEnum;
 
 typedef enum { imageTyp, intTyp, stringTyp, floatTyp } cTyp;
 
-typedef enum { AMP, NEG, AST, PLS, DIV, MNS, TIL, MOD, L_THAN, G_THAN, L_SHF, R_SHF, GE_THAN, LE_THAN } mathOp;
+typedef enum {  AMP, PLS, AST, NEG, DIV, MNS, TIL, MOD, L_THAN, G_THAN, L_SHF, R_SHF, GE_THAN, 
+                LE_THAN, EQ, NEQ, AND, EXCL_OR, OR, LOG_AND, LOG_OR} mathOp;
 
 typedef enum {TRANS_UNIT, FUNC_DEF, FUNC_DEC, COMP_STAT, JUMP_STAT, 
               STAT_LIST, RET, POST_EXP, ARG_EXP_LIST, HEAD, EXT_DECL, 
               PROG, EXP_STAT, DECL_LIST, DECL, INIT_DECL, INIT_DECL_LIST, 
               DIR_DECL, INIT_DEF_DECL, SEL_STAT, IF_STAT, ITER_STAT, WHILE_STAT, DO_WHILE_STAT,
-              FOR_STAT, FOR_IN_STAT, UNARY_EXP_OP, ADD_EXP, MULT_EXP, SHI_EXP,
-              INIT_LIST, PARAM_DECL, PARAM_DECL_LIST , REL_EXP,
+              FOR_STAT, FOR_IN_STAT, UNARY_EXP_OP, ADD_EXP, MULT_EXP, SHI_EXP, EQU_EXP, AND_EXP, 
+              COND_EXP, INIT_LIST, PARAM_DECL, PARAM_DECL_LIST , REL_EXP, CONST_EXP_C, CONST_EXP_N,
+              EXCL_OR_EXP, OR_EXP, LOG_AND_EXP, LOG_OR_EXP, DECL_STAT_LIST, PROG_HEADER
               } oper_types; 
 
 #define STRING_MAX_SIZE 256

@@ -1,16 +1,7 @@
-def factorial(x):
-	resp = 1
-	i = 1
-	while(int(i<=x)):
-		resp = (resp*i)
-		i = (i+1)
-
-	return resp
-
+from pruebas_py.load_image import * 
+from pruebas_py.show_image import * 
 def main():
-	var = factorial((5%10))
-	print("Resultado:")
-	print(var)
-	return 0
+	im = load_image("pruebas_py/image.jpg")
+	show_image(im)
 
 main()

@@ -8,8 +8,7 @@
 	#include<math.h>
 %}
 %%
-"#include"([ ]+)?((<(\\.|[^>])+>)|(\"(\\.|[^"])+\"))			{return HEADER;}
-"#define"[ ]+[a-zA-z_][a-zA-z_0-9]* 											{return DEFINE;}
+"#include"([ ]+)?(\"(\\.|[^"])+\")												{strcpy(yylval.sArr, yytext); return HEADER;}
 "img"																											{yylval.cType = imageTyp; return type_const;}
 "string"																									{yylval.cType = stringTyp; return type_const;}
 "int"																											{yylval.cType = intTyp; return type_const;}
