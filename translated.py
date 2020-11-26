@@ -1,11 +1,11 @@
 def factorial(x):
+	
 	resp = 1
 	i = 1
 	while(int( i <= x )):
-		resp = ( resp * i )
-		i = ( i + 1 )
+		resp *= i
+		i += 1
 
-	i = 1
 	return resp
 
 def main():

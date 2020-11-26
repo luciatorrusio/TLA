@@ -135,12 +135,6 @@ stat
 exp_stat					
 							: exp ';'													    {$$ = $1;}
 							;
-//decl_stat_list
-//							: decl_list decl_stat_list						{$$ = opr(DECL_STAT_LIST, 3, $2, $1, NULL);}
-//							| stat_list decl_stat_list						{$$ = opr(DECL_STAT_LIST, 3, $2, NULL, $1);}
-//							| decl_list														{$$ = opr(DECL_STAT_LIST, 3, NULL, $1, NULL);}
-//							| stat_list														{$$ = opr(DECL_STAT_LIST, 3, NULL, NULL, $1);}
-//							;
 compound_stat				
 							: '{' decl_list stat_list '}'         {$$ = opr(COMP_STAT, 2, $2, $3);}
 							| '{' decl_list '}'         					{$$ = opr(COMP_STAT, 2, $2, NULL);}
@@ -170,7 +164,7 @@ exp
 							;
 assignment_exp				
 							: const_exp														{$$ = $1;}
-							| init_declarator											{$$ = opr(ASS_EXP, , $1);};
+							| init_declarator											{$$ = opr(ASS_EXP, 1, $1);};
 							;
 const_exp					
 							: conditional_exp                 		{$$ = opr(CONST_EXP_C, 1, $1);}
