@@ -1,7 +1,8 @@
 def main():
-	a = [0, 2, 3]
-	a[0] = a[( 0 + 1 )]
-	print(a)
+	while(1):
+		print("No dejo de imprimir !")
+		return 0
+
 	return 0
 
 main()

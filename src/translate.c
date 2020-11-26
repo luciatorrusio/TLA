@@ -39,11 +39,8 @@ static void translate_selection_stat(nodeType * t);
 static void translate_jump_stat(nodeType * t);
 static void translate_stat(nodeType * t);
 static void translate_stat_list(nodeType * t);
-static void translate_direct_declarator(nodeType * t);
 static void translate_initializer_list(nodeType * t);
-static void translate_initializer(nodeType * t);
 static void translate_init_def_declarator(nodeType * t);
-static void translate_init_declarator(nodeType * t);
 static void translate_decl(nodeType * t);
 static void translate_decl_list(nodeType * t);
 static void translate_compound_stat(nodeType * t);
@@ -55,7 +52,6 @@ static void translate_external_decl(nodeType * t);
 static void translate_trans_unit(nodeType * t);
 static void translate_program_unit(nodeType * t);
 static void translate_prog(nodeType * t);
-static void translate_direct_declarator(nodeType * t);
 
 char indent[MAX_INDENTATION_LEVEL];
 int indentLevel = 0;
@@ -740,22 +736,8 @@ static void translate_initializer_list(nodeType * t) {
 	}
 }
 
-static void translate_initializer(nodeType * t) {
-	fprintf(stderr, "FOUND initializer\n");
-
-	if (t->type == typeOpr && t->opr.oper == INIT_LIST && t->opr.nops == 1) {
-		nodeType * list = t->opr.op[0];
-		pybody("[");
-		translate_initializer_list(list);
-		pybody("]");
-	}
-	else {
-		translate_exp(t);
-	}
-}
-
 static void translate_init_def_declarator(nodeType * t){
-	fprintf(stderr, "FOUND init_declarator\n");
+	fprintf(stderr, "FOUND init_def_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DEF_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
@@ -767,61 +749,6 @@ static void translate_init_def_declarator(nodeType * t){
 			translate_const_exp(exp);
 		}
 
-	}
-}
-
-static void translate_init_declarator(nodeType * t){
-	fprintf(stderr, "FOUND init_declarator\n");
-
-	if (t->type == typeOpr && t->opr.oper == INIT_DECL && t->opr.nops == 3) {
-		nodeType * directDecl = t->opr.op[0];
-		nodeType * sign = t->opr.op[1];
-		nodeType * initializer = t->opr.op[2];
-		
-		translate_direct_declarator(directDecl);
-		
-		if (sign == NULL) {
-			fprintf(stderr, "NON NULL INITIALIZER\n");
-			pybody(" = ");
-			translate_initializer(initializer);
-		}
-    else if(initializer == NULL){
-      switch(sign->mop.op){
-        case INC:
-          pybody(" += 1");
-        break;
-        case DEC:
-          pybody(" -= 1");
-        break;
-      }
-    }
-    else {
-      switch(sign->mop.op){
-        case ASS_DIV:
-          pybody(" /= ");
-        break;
-        case ASS_ADD:
-          pybody(" += ");
-        break;
-        case ASS_MOD:
-          pybody(" %%= ");
-        break;
-        case ASS_R_SHIFT:
-          pybody(" >>= ");
-        break;
-        case ASS_L_SHIFT:
-          pybody(" <<= ");
-        break;
-        case ASS_SUB:
-          pybody(" -= ");
-        break;
-        case ASS_MLT:
-          pybody(" *= ");
-        break;
-      }
-
-			translate_initializer(initializer);
-    }
 	}
 }
 
