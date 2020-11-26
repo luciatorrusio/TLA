@@ -4,6 +4,6 @@
 #include <stdbool.h>
 #include <project.h>
 
-void processTree(nodeType * root, bool * success);
+void process_tree(nodeType * root, bool * success);
 
 #endif

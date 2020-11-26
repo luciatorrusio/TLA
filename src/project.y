@@ -15,7 +15,7 @@
 	nodeType *con(int value);
 	nodeType *typ(cTyp value, bool arr);
 	nodeType *mop(mathOp op);
-	void freeNode(nodeType *p);
+	void free_node(nodeType *p);
 	int ex(nodeType *p);
 	int yylex(void);
 	
@@ -326,12 +326,12 @@ nodeType *mop(mathOp op) {
 	return p;
 }
 
-void freeNode(nodeType *p) {
+void free_node(nodeType *p) {
 	int i;
 	if (!p) return;
 	if (p->type == typeOpr) {
 		for (i = 0; i < p->opr.nops; i++)
-			freeNode(p->opr.op[i]);
+			free_node(p->opr.op[i]);
 		free(p->opr.op);
 	}
 	free (p);
@@ -342,13 +342,13 @@ int main()
     yyparse();
 
 		if (!success) {
-			freeNode(root);
+			free_node(root);
 			return -1;
 		}
 
-		processTree(root, &success);
+		process_tree(root, &success);
 
-		freeNode(root);
+		free_node(root);
 
     if(success)
     	fprintf(stderr, "Parsing Successful\n");
@@ -361,6 +361,6 @@ void yyerror(char *msg)
 	extern int yylineno;
 	fprintf(stderr, "Parsing Failed\nLine Number: %d %s\n",yylineno,msg);
 	success = false;
-	freeNode(root);
+	free_node(root);
 }
 
