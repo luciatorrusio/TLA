@@ -8,12 +8,24 @@
 #include <translate.h>
 #include <hashtable.h>
 
+static void init_functions_h(void);
+static void init_symbols_h(void);
+
 static void add_fun_to_list(struct function_info * f);
 static void pre_load_native_functions();
+
+static void add_type_to_fun(struct function_info * f, nodeType * type_qualifier);
+static void add_params_to_fun(struct function_info * f, nodeType * fun_declarator);
 static void check_libraries(nodeType * t);
 
 static void check_types_rec(nodeType * t, bool * checked);
 static void check_types(nodeType * t, bool * checked);
+
+static void destroy_functions_h(void);
+static void	destroy_symbols_h(void);
+
+static void delete_allocated_functions(void);
+static void delete_allocated_symbols(void);
 
 // shorthand way to get the key from hashtable or defVal if not found
 #define kh_get_val(kname, hash, key, defVal) ({k=kh_get(kname, hash, key);(k!=kh_end(hash)?kh_val(hash,k):defVal);})
@@ -22,230 +34,194 @@ static void check_types(nodeType * t, bool * checked);
 // returns 0=replaced existing item, 1=bucket empty (new key), 2-adding element previously deleted
 #define kh_set(kname, hash, key, val) ({int ret; k = kh_put(kname, hash,key,&ret); kh_value(hash,k) = val; ret;})
 
-#define key_is_present(table, key) (!(key == kh_end(table)))
+#define kh_key_present(hash, key) (!(key == kh_end(hash)))
 
 #define MAX_PARAMS_NATIVE 10
-
-struct params_basic_t {
-	bool variable;
-	unsigned int amount;
-	// list
-	typNodeType params[MAX_PARAMS_NATIVE];
-};
 
 struct function_info_basic {
   typNodeType ret;
   
-//  char * id;
+  char * id;
 
-  struct params_t params;
+	bool p_variable;
+	unsigned int p_amount;
+	// list
+	typNodeType p_params[MAX_PARAMS_NATIVE];
 };
 
 static struct function_info_basic native_funcs_basic[] = {
 	{
-		imageTyp,
-//		.id = "collage",
-				true,
-				1,
-						imageTyp,
-						true
-	},
-	{
 		.ret = imageTyp,
-//		.id = "gray_scale_image",
-		.params = {
+		.id = "collage",
+		.p_variable = true,
+		.p_amount = 1,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 1,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					}
-				}
+				.t = imageTyp,
+				.arr = true
 			}
 		}
 	},
 	{
 		.ret = imageTyp,
-//		.id = "image_mirror",
-		.params = {
+		.id = "gray_scale_image",
+		.p_variable = false,
+		.p_amount = 1,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 2,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-					{
-						.t = stringTyp,
-						.arr = false
-					},
-				}
+				.t = imageTyp,
+				.arr = false
 			}
 		}
 	},
 	{
 		.ret = imageTyp,
-//		.id = "invert_colors",
-		.params = {
+		.id = "image_mirror",
+		.p_variable = false,
+		.p_amount = 2,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 1,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					}
-				}
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = stringTyp,
+				.arr = false
+			},
+		}
+	},
+	{
+		.ret = imageTyp,
+		.id = "invert_colors",
+		.p_variable = false,
+		.p_amount = 1,
+		.p_params = {
+			{
+				.t = imageTyp,
+				.arr = false
 			}
 		}
 	},
 	{
 		.ret = imageTyp,
-//		.id = "load_image",
-		.params = {
+		.id = "load_image",
+		.p_variable = false,
+		.p_amount = 1,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 1,
-				.params = {
-					{
-						.t = stringTyp,
-						.arr = false
-					}
-				}
+				.t = stringTyp,
+				.arr = false
 			}
 		}
 	},
 	{
 		.ret = imageTyp,
-//		.id = "resize_image",
-		.params = {
+		.id = "resize_image",
+		.p_variable = false,
+		.p_amount = 2,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 2,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-					{
-						.t = floatTyp,
-						.arr = false
-					},
-				}
-			}
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = floatTyp,
+				.arr = false
+			},
 		}
 	},
 	{
 		.ret = imageTyp,
-//		.id = "rotate_image",
-		.params = {
+		.id = "rotate_image",
+		.p_variable = false,
+		.p_amount = 2,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 2,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-					{
-						.t = intTyp,
-						.arr = false
-					},
-				}
-			}
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
 		}
 	},
 	{
 		.ret = intTyp,
-//		.id = "save_image",
-		.params = {
+		.id = "save_image",
+		.p_variable = false,
+		.p_amount = 2,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 2,
-				.params = {
-					{
-						.t = stringTyp,
-						.arr = false
-					},
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-				}
-			}
+				.t = stringTyp,
+				.arr = false
+			},
+			{
+				.t = imageTyp,
+				.arr = false
+			},
 		}
 	},
 	{
 		.ret = intTyp,
-//		.id = "save_image_cmap",
-		.params = {
+		.id = "save_image_cmap",
+		.p_variable = false,
+		.p_amount = 3,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 3,
-				.params = {
-					{
-						.t = stringTyp,
-						.arr = false
-					},
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-					{
-						.t = stringTyp,
-						.arr = false
-					},
-				}
-			}
+				.t = stringTyp,
+				.arr = false
+			},
+			{
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = stringTyp,
+				.arr = false
+			},
 		}
 	},
 	{
 		.ret = intTyp,
-//		.id = "show_image",
-		.params = {
+		.id = "show_image",
+		.p_variable = false,
+		.p_amount = 1,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 1,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-				}
-			}
+				.t = imageTyp,
+				.arr = false
+			},
 		}
 	},
 	{
 		.ret = intTyp,
-//		.id = "show_image_cmap",
-		.params = {
+		.id = "show_image_cmap",
+		.p_variable = false,
+		.p_amount = 2,
+		.p_params = {
 			{
-				.variable = false,
-				.amount = 2,
-				.params = {
-					{
-						.t = imageTyp,
-						.arr = false
-					},
-					{
-						.t = stringTyp,
-						.arr = false
-					},
-				}
-			}
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = stringTyp,
+				.arr = false
+			},
 		}
 	},
 };
 
 // Global list of all functions info allocated
-static struct function_info * allocated_functions;
+static struct function_info * allocated_functions = NULL;
 
 KHASH_MAP_INIT_STR(functions_table, struct function_info *);
 
 khash_t(functions_table) * functions_h;
+
+static void init_functions_h() {
+	functions_h = kh_init(functions_table); // create a hashtable
+}
 
 static void add_fun_to_list(struct function_info * f) {
     struct function_info * l = allocated_functions;
@@ -256,56 +232,185 @@ static void add_fun_to_list(struct function_info * f) {
 static void pre_load_native_functions() {
 	int ret, is_missing;
 	khiter_t k;
-  	functions_h = kh_init(functions_table); // create a hashtable
 
 	int cantFuncs = sizeof(native_funcs_basic)/sizeof(struct function_info_basic);
 
 	for(int i = 0 ; i < cantFuncs ; i++) {
-		k = kh_put(functions_table, functions_h, native_funcs_basic[i].id, &ret);
-		
 		struct function_info_basic * native = &native_funcs_basic[i];
-		struct function_info * f = malloc(sizeof(struct function_info));
-		memset(f, 0x0, sizeof(struct function_info));
+		struct function_info * f = calloc(1, sizeof(struct function_info));
+
 		f->ret = native->ret;
 		strcpy(f->id, native->id);
-		f->params.variable = native->params.variable;
-		f->params.amount = native->params.amount;
-		f->params.params = malloc(f->params.amount * sizeof(typNodeType));
+		f->params.variable = native->p_variable;
+		f->params.amount = native->p_amount;
+
+		paramNode * prev = NULL;
+		paramNode * curr = NULL;
 		for (unsigned j = 0; j < f->params.amount; j++) {
-			memcpy(&f->params.params[j], &native->params.params[j], sizeof(typNodeType));
+			curr = calloc(1, sizeof(paramNode));
+
+			if (prev == NULL) {
+				f->params.params = curr;
+			}
+			else {
+				prev->next = curr;
+			}
+
+			memcpy(&curr->p, &native->p_params[j], sizeof(typNodeType));
+
+			prev = curr;
+			curr = prev->next;
 		}
 
-        add_fun_to_list(f);
+		add_fun_to_list(f);
 
-		kh_value(functions_h, k) = f;
+		kh_set(functions_table, functions_h, f->id, f);
 	}
+}
 
+static void add_type_to_fun(struct function_info * f, nodeType * type_qualifier) {
+	if (type_qualifier->type == typeTyp) {
+		f->ret.t = type_qualifier->typ.t;
+		f->ret.arr = type_qualifier->typ.arr;
+	}
+}
+
+static paramNode * add_param_to_fun(struct function_info * f, nodeType * param_decl_list) {
+	if (param_decl_list->type == typeOpr && param_decl_list->opr.oper == PARAM_DECL_LIST) {
+		nodeType * decl_list = param_decl_list->opr.op[0];
+		nodeType * decl = param_decl_list->opr.op[1];
+
+		nodeType * type_qualifier = decl->opr.op[0];
+
+		paramNode * n = add_param_to_fun(f, decl_list);
+		
+		paramNode * newNode = calloc(1, sizeof(paramNode));
+		newNode->p.t = type_qualifier->typ.t;
+		newNode->p.arr = type_qualifier->typ.arr;
+
+		n->next = newNode;
+		f->params.amount++;
+		return n;
+	}
+	else {
+		nodeType * type_qualifier = param_decl_list->opr.op[0];
+
+		paramNode * newNode = calloc(1, sizeof(paramNode));
+		newNode->p.t = type_qualifier->typ.t;
+		newNode->p.arr = type_qualifier->typ.arr;
+
+		f->params.amount++;
+		return newNode;
+	}
+}
+
+static void add_params_to_fun(struct function_info * f, nodeType * fun_declarator) {
+	if (fun_declarator->type == typeOpr && fun_declarator->opr.oper == FUNC_DEC) {
+		if (fun_declarator->opr.nops > 0) {
+			f->params.amount = 0;
+			f->params.variable = false;
+			f->params.params = add_param_to_fun(f, fun_declarator->opr.op[0]);
+		}
+		else {
+			f->params.amount = 0;
+			f->params.variable = false;
+			f->params.params = NULL;
+		}
+	}
 }
 
 static void check_libraries(nodeType * t) {
-  
+	if (t->type == typeOpr) {
+		if (t->opr.oper == FUNC_DEF && t->opr.nops == 4) {
+			int ret, is_missing;
+			khiter_t k;
+
+			struct function_info * f = malloc(sizeof(struct function_info));
+			memset(f, 0x0, sizeof(struct function_info));
+
+			nodeType * type_qualifier = t->opr.op[0];
+			nodeType * id = t->opr.op[1];
+			nodeType * fun_declarator = t->opr.op[2];
+
+			add_type_to_fun(f, type_qualifier);
+			strcpy(f->id, id->ide.i);
+			add_params_to_fun(f, fun_declarator);
+
+			add_fun_to_list(f);
+
+			printf("FUNCTION ID: %s\n", f->id);
+
+			kh_set(functions_table, functions_h, f->id, f);
+		}
+		else {
+			for(unsigned int i = 0; i < t->opr.nops; i++) {
+				check_libraries(t->opr.op[i]);
+			}
+		}
+	}
 }
 
 // Global list of all symbols info allocated
-static struct var_info * allocated_symbols;
+static struct var_info * allocated_symbols = NULL;
 
 // Current symbols used
-static struct var_info * current_symbols;
+static struct var_info * current_symbols = NULL;
 
 // Symbols to be restored after current context finish
-static struct var_info * to_restore_symbols;
+static struct var_info * to_restore_symbols = NULL;
+
+static void init_symbols_h() {
+	functions_h = kh_init(functions_table); // create a hashtable
+}
 
 KHASH_MAP_INIT_STR(symbols_table, struct var_info *);
 
 khash_t(symbols_table) * symbols_h;
 
-static void check_types_rec(nodeType * t, bool * checked);
-
-static void check_types(nodeType * t, bool * checked) {
+static void check_types_rec(nodeType * t, bool * checked) {
 	int ret, is_missing;
 	khiter_t k;
-	symbols_h = kh_init(symbols_table);
-	chck_types_rec(t, checked);
+
+
+}
+
+static void check_types(nodeType * t, bool * checked) {
+	check_types_rec(t, checked);
+}
+
+static void destroy_functions_h(void) {
+	kh_destroy(functions_table, functions_h);
+}
+
+static void	destroy_symbols_h(void) {
+	kh_destroy(symbols_table, symbols_h);
+}
+
+static void delete_allocated_functions(void) {
+	struct function_info * curr = allocated_functions;
+	struct function_info * prev = curr;
+	while (prev != NULL) {
+		curr = prev->next;
+		if (prev != NULL) {
+			if (prev->params.amount > 0 && prev->params.params != NULL) {
+				free(prev->params.params);
+			}
+			free(prev);
+		}
+		prev = curr;
+	}
+}
+
+static void delete_allocated_symbols(void) {
+	struct var_info * curr = allocated_symbols;
+	struct var_info * prev = curr;
+	while (prev != NULL) {
+		curr = prev->next;
+		if (prev != NULL) {
+			free(prev);
+		}
+		prev = curr;
+	}
 }
 
 void process_tree(nodeType * root, bool * success) {
@@ -313,13 +418,13 @@ void process_tree(nodeType * root, bool * success) {
 
 	bool checked = true;
 
+	init_functions_h();
 	pre_load_native_functions();
 
 	check_libraries(root);
-	check_types(root, &checked);
 
-    delete_allocated_functions();
-    delete_allocated_symbols();
+	init_symbols_h();
+	check_types(root, &checked);
 
 	if (!checked) {
 		*success = false;
@@ -328,4 +433,10 @@ void process_tree(nodeType * root, bool * success) {
 	}
 
 	translate_to_python(root);
+
+	destroy_functions_h();
+	destroy_symbols_h();
+
+	delete_allocated_functions();
+	delete_allocated_symbols();
 }

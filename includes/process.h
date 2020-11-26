@@ -4,11 +4,16 @@
 #include <stdbool.h>
 #include <project.h>
 
+typedef struct paramNode {
+  typNodeType p;
+  struct paramNode * next;
+} paramNode;
+
 struct params_t {
   bool variable;
   unsigned int amount;
   // list
-  typNodeType * params;
+  paramNode * params;
 };
 
 struct function_info {
