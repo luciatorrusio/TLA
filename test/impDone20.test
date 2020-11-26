@@ -1,0 +1,12 @@
+int main() {
+  /*
+    definitions
+  */
+  int i;
+  
+  
+  // code
+  for(i = 0; i < 5; i++) {
+    print("Esta es la variable numero:", i);
+  }
+}

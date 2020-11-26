@@ -27,15 +27,22 @@
 "return"																									{return RETURN;}
 "||" 																											{return or_const;}
 "&&"																											{return and_const;}
-"=="																											{return eq_const;}
-"!="																											{return neq_const;}
-"<="																											{return rel_const_l;}
-">="																											{return rel_const_g;}
-">>"																											{return shift_const_r;}
-"<<"																											{return shift_const_l;}
-"++"|"--"																									{return inc_const;}
+"=="																											{yylval.mOp = EQ; return eq_const;}
+"!="																											{yylval.mOp = NEQ; return eq_const;}
+"<="																											{yylval.mOp = LE_THAN; return rel_const;}
+">="																											{yylval.mOp = GE_THAN; return rel_const;}
+">>"																											{yylval.mOp = R_SHF; return shift_const;}
+"<<"																											{yylval.mOp = L_SHF; return shift_const;}
+"++"																											{yylval.mOp = INC; return inc_dec_const;}
+"--"																											{yylval.mOp = DEC; return inc_dec_const;}
 ";"|"="|","|"{"|"}"|"("|")"|"["|"]"|"*"|"+"|"-"|"/"|"?"|":"|"&"|"|"|"^"|"!"|"~"|"%"|"<"|">"					{return yytext[0];}
-"*="|"/="|"+="|"%="|">>="|"-="|"<<="|"^="									{return PUNC;}
+"*="                                                      {yylval.mOp = ASS_MLT; return ass_eq;}
+"/="                                                      {yylval.mOp = ASS_DIV; return ass_eq;}
+"+="                                                      {yylval.mOp = ASS_ADD; return ass_eq;}
+"%="																											{yylval.mOp = ASS_MOD; return ass_eq;}
+">>="																											{yylval.mOp = ASS_R_SHIFT; return ass_eq;}
+"-="																											{yylval.mOp = ASS_SUB; return ass_eq;}
+"<<="																											{yylval.mOp = ASS_L_SHIFT; return ass_eq;}
 [0-9]+																										{yylval.iValue = atoi(yytext); return int_const;}
 [0-9]+"."[0-9]+																						{strcpy(yylval.sArr, yytext); return float_const;}	
 [a-zA-Z_][a-zA-Z_0-9]*			 															{strcpy(yylval.ident, yytext); return id;}

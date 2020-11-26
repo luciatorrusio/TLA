@@ -31,6 +31,7 @@ static void translate_logical_or_exp(nodeType * t);
 static void translate_conditional_exp(nodeType * t);
 static void translate_non_operable_exp(nodeType * t);
 static void translate_const_exp(nodeType * t);
+static void translate_assignment_exp(nodeType * t);
 static void translate_exp(nodeType * t);
 static void translate_exp_stat(nodeType * t);
 static void translate_selection_stat(nodeType * t);
@@ -183,6 +184,54 @@ static void prefixPrint(nodeType * t, int depth) {
 					break;
 				case R_SHF:
 					type = ">> (RIGHT_SHIFT)";
+					break;
+				case EQ:
+					type = "== (EQUAL)";
+					break;
+				case NEQ:
+					type = "!= (NOT_EQUAL)";
+					break;	
+				case AND:
+					type = "& (BIT_AND)";
+					break;	
+				case EXCL_OR:
+					type = "^ (BIT_EXC_OR)";
+					break;	
+				case OR:
+					type = "| (BIT_OR)";
+					break;	
+				case LOG_AND:
+					type = "&& (LOGIC_AND)";
+					break;	
+				case LOG_OR:
+					type = "|| (LOGIC_OR)";
+					break;	
+				case INC:
+					type = "++ (INC)";
+					break;	
+				case DEC:
+					type = "-- (DEC)";
+					break;	
+				case ASS_MLT:
+					type = "*= (ASSIGN_MULT)";
+					break;	
+				case ASS_DIV:
+					type = "/= (ASSIGN_DIV)";
+					break;	
+				case ASS_ADD:
+					type = "+= (ASSIGN_ADD)";
+					break;	
+				case ASS_MOD:
+					type = "%%= (ASSIGN_MOD)";
+					break;	
+				case ASS_R_SHIFT:
+					type = ">>= (ASSIGN_RIGHT_SHIFT)";
+					break;	
+				case ASS_SUB:
+					type = "-= (ASSIGN_SUBSTRACT)";
+					break;	
+				case ASS_L_SHIFT:
+					type = "<<= (ASSIGN_LEFT_SHIFT)";
 					break;
 			}
 			fprintf(stderr, "%s- Operator: %s\n", prefIndent, type);
@@ -577,12 +626,21 @@ static void translate_const_exp(nodeType * t) {
 
 }
 
+static void translate_assignment_exp(nodeType * t){
+	fprintf(stderr, "FOUND exp\n");
+
+	if (t->type == typeOpr && t->opr.oper == ASS_EXP && t->opr.nops == 1) {
+		translate_init_declarator(t->opr.op[0]);
+	}
+	else {
+	  translate_const_exp(t);
+  }
+}
+
 static void translate_exp(nodeType * t){
 	fprintf(stderr, "FOUND exp\n");
 
-	// TODO: Jump all functions
-
-	translate_const_exp(t);
+	translate_assignment_exp(t);
 }
 
 static void translate_exp_stat(nodeType * t) {
@@ -742,12 +800,7 @@ static void translate_decl(nodeType * t){
 		nodeType * type = t->opr.op[0];
 		nodeType * in = t->opr.op[1];
 		pybody_ind("");
-		if (type == NULL) {
-			translate_init_declarator(in);
-		}
-		else {
-			translate_init_def_declarator(in);
-		}
+		translate_init_def_declarator(in);
 	}
 }
 
@@ -819,17 +872,55 @@ static void translate_init_def_declarator(nodeType * t){
 static void translate_init_declarator(nodeType * t){
 	fprintf(stderr, "FOUND init_declarator\n");
 
-	if (t->type == typeOpr && t->opr.oper == INIT_DECL && t->opr.nops == 2) {
+	if (t->type == typeOpr && t->opr.oper == INIT_DECL && t->opr.nops == 3) {
 		nodeType * directDecl = t->opr.op[0];
-		nodeType * initializer = t->opr.op[1];
+		nodeType * sign = t->opr.op[1];
+		nodeType * initializer = t->opr.op[2];
 		
 		translate_direct_declarator(directDecl);
 		
-		if (initializer != NULL) {
+		if (sign == NULL) {
 			fprintf(stderr, "NON NULL INITIALIZER\n");
 			pybody(" = ");
 			translate_initializer(initializer);
 		}
+    else if(initializer == NULL){
+      switch(sign->mop.op){
+        case INC:
+          pybody(" += 1");
+        break;
+        case DEC:
+          pybody(" -= 1");
+        break;
+      }
+    }
+    else {
+      switch(sign->mop.op){
+        case ASS_DIV:
+          pybody(" /= ");
+        break;
+        case ASS_ADD:
+          pybody(" += ");
+        break;
+        case ASS_MOD:
+          pybody(" %%= ");
+        break;
+        case ASS_R_SHIFT:
+          pybody(" >>= ");
+        break;
+        case ASS_L_SHIFT:
+          pybody(" <<= ");
+        break;
+        case ASS_SUB:
+          pybody(" -= ");
+        break;
+        case ASS_MLT:
+          pybody(" *= ");
+        break;
+      }
+
+			translate_initializer(initializer);
+    }
 	}
 }
 

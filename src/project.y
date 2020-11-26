@@ -38,7 +38,7 @@
 
 // %token int_const float_const id string type_const DEFINE
 %token DEFINE IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC
-%token or_const and_const eq_const neq_const shift_const_l shift_const_r rel_const_l rel_const_g inc_const
+%token or_const and_const
 %token param_const ELSE
 %left '+' '-'
 %left '*' '/'
@@ -46,13 +46,14 @@
 %nonassoc ELSE
 //%define parse.error verbose
 
+%token <mOp> ass_eq eq_const shift_const rel_const inc_dec_const
 %token <cType> type_const
 %token <sArr> string float_const HEADER
 %token <iValue> int_const
 %token <ident> id
 
 %type <nPtr> program program_unit translation_unit external_decl function_definition function_declarator 
-%type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list conditional_exp const_exp 
+%type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list conditional_exp const_exp assignment_exp 
 %type <nPtr> logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp 
 %type <nPtr> shift_exp additive_exp mult_exp unary_exp postfix_exp primary_exp argument_exp_list
 %type <nPtr> decl decl_list init_declarator direct_declarator initializer initializer_list
@@ -82,7 +83,6 @@ function_definition
 							;
 decl						
               : type_qualifier init_def_declarator ';'  {$$ = opr(DECL, 2, $1, $2);} 
-							| init_declarator ';'									{$$ = opr(DECL, 2, NULL, $1);}
 							;
 decl_list					
               : decl														    {$$ = $1;}
@@ -91,9 +91,11 @@ decl_list
 init_def_declarator				
               : id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
 							| id '=' initializer									{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);}
-							;
+							; 
 init_declarator				
-							: direct_declarator '=' initializer		{$$ = opr(INIT_DECL, 2, $1, $3);}
+							: direct_declarator '=' initializer		{$$ = opr(INIT_DECL, 3, $1, NULL, $3);}
+							| direct_declarator ass_eq initializer {$$ = opr(INIT_DECL, 3, $1, mop($2), $3);}
+							| direct_declarator inc_dec_const  {$$ = opr(INIT_DECL, 3, $1, mop($2), NULL);}
 							;
 direct_declarator						
 							: id																	{$$ = opr(DIR_DECL, 2, ide($1), NULL);}
@@ -163,9 +165,12 @@ stat_list
 							: stat     														{$$ = $1;}
 							| stat_list stat  										{$$ = opr(STAT_LIST, 2, $1, $2);}
 							;
-
 exp							
+							: assignment_exp											{$$ = $1;}
+							;
+assignment_exp				
 							: const_exp														{$$ = $1;}
+							| init_declarator											{$$ = opr(ASS_EXP, , $1);};
 							;
 const_exp					
 							: conditional_exp                 		{$$ = opr(CONST_EXP_C, 1, $1);}
@@ -196,20 +201,17 @@ and_exp
 							;
 equality_exp				
 							: relational_exp											{$$ = $1;}
-							| equality_exp eq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop(EQ), $3);}
-							| equality_exp neq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop(NEQ), $3);}
+							| equality_exp eq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop($2), $3);}
 							; 
 relational_exp				
 							: shift_exp									            {$$ = $1;}
 							| relational_exp '<' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(L_THAN), $3 );}
 							| relational_exp '>' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(G_THAN), $3 );}
-							| relational_exp rel_const_l shift_exp  {$$ = opr(REL_EXP, 3, $1, mop(LE_THAN), $3);}
-							| relational_exp rel_const_g shift_exp  {$$ = opr(REL_EXP, 3, $1, mop(GE_THAN), $3);}
+							| relational_exp rel_const shift_exp    {$$ = opr(REL_EXP, 3, $1, mop($2) , $3);}
 							;
 shift_exp			
 							: additive_exp													{$$ = $1;}
-							| shift_exp shift_const_l additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop(L_SHF), $3);}
-							| shift_exp shift_const_r additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop(R_SHF), $3);}
+							| shift_exp shift_const additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop($2), $3);}
 							;
 additive_exp				
 							: mult_exp														{$$ = $1;}
