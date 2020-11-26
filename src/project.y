@@ -56,10 +56,8 @@
 %type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list conditional_exp const_exp assignment_exp 
 %type <nPtr> logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp 
 %type <nPtr> shift_exp additive_exp mult_exp unary_exp postfix_exp primary_exp argument_exp_list
-%type <nPtr> decl decl_list init_declarator direct_declarator initializer initializer_list
-%type <nPtr> param_decl_list param_decl type_qualifier init_def_declarator
-%type <nPtr> selection_stat iteration_stat unary_operator non_operable_exp
-
+%type <nPtr> decl decl_list initializer_list param_decl_list param_decl type_qualifier init_def_declarator
+%type <nPtr> selection_stat iteration_stat unary_operator non_operable_exp arr_exp
 
 %start program
 
@@ -90,32 +88,14 @@ decl_list
 							;
 init_def_declarator				
               : id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
-							| id '=' initializer									{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);}
+							| id '=' const_exp										{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);}
 							; 
-init_declarator				
-							: direct_declarator '=' initializer		{$$ = opr(INIT_DECL, 3, $1, NULL, $3);}
-							| direct_declarator ass_eq initializer {$$ = opr(INIT_DECL, 3, $1, mop($2), $3);}
-							| direct_declarator inc_dec_const  {$$ = opr(INIT_DECL, 3, $1, mop($2), NULL);}
-							;
-direct_declarator						
-							: id																	{$$ = opr(DIR_DECL, 2, ide($1), NULL);}
-							| id '[' const_exp ']'								{$$ = opr(DIR_DECL, 2, ide($1), $3);}		
-							; 
-initializer					
-              : exp								      						{$$ = $1;}
-							| '[' initializer_list ']'						{$$ = opr(INIT_LIST, 1, $2);}
-							| '[' initializer_list ',' ']'				{$$ = opr(INIT_LIST, 1, $2);}
-							;
-initializer_list			
-							: initializer									        {$$ = $1;}
-							| initializer_list ',' initializer		{$$ = opr(INIT_LIST, 2, $1, $3);}
-							;
 param_decl_list				
               : param_decl													{$$ = $1;}
 							| param_decl_list ',' param_decl			{$$ = opr(PARAM_DECL_LIST, 2, $1, $3);}
 							;
 param_decl			
-							: type_qualifier direct_declarator		{$$ = opr(PARAM_DECL, 2, $1, $2);}
+							: type_qualifier id										{$$ = opr(PARAM_DECL, 2, $1, ide($2));}
 							;
 type_qualifier     
 							: type_const											    {$$ = typ($1, false);}
@@ -150,9 +130,9 @@ jump_stat
 							| RETURN ';'													{$$ = opr(RET, 0);}
 							;
 iteration_stat				
-              : WHILE '(' exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}
-							| DO compound_stat WHILE '(' exp ')' ';'       			{$$ = opr(DO_WHILE_STAT, 2, $2, $5);}
-							| FOR '(' init_declarator ';' conditional_exp ';' init_declarator ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
+              : WHILE '(' conditional_exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}
+							| DO compound_stat WHILE '(' conditional_exp ')' ';'       			{$$ = opr(DO_WHILE_STAT, 2, $2, $5);}
+							| FOR '(' assignment_exp ';' conditional_exp ';' assignment_exp ')' compound_stat  		{$$ = opr(FOR_STAT, 4, $3, $5, $7, $9);}
 							| FOR '(' type_const id IN id ')' compound_stat			{$$ = opr(FOR_IN_STAT, 4, typ($3, false), ide($4), ide($6), $8);}
 							;
 stat_list					
@@ -164,7 +144,12 @@ exp
 							;
 assignment_exp				
 							: const_exp														{$$ = $1;}
-							| init_declarator											{$$ = opr(ASS_EXP, 1, $1);};
+							| id '=' const_exp										{$$ = opr(ASS_EXP, 3, ide($1), NULL, $3);}
+							| arr_exp '=' const_exp								{$$ = opr(ASS_EXP_A, 3, $1, NULL, $3);}
+							| id ass_eq const_exp 								{$$ = opr(ASS_EXP, 3, ide($1), mop($2), $3);}
+							| arr_exp ass_eq const_exp						{$$ = opr(ASS_EXP_A, 3, $1, mop($2), $3);}
+							| id inc_dec_const  									{$$ = opr(ASS_EXP, 3, ide($1), mop($2), NULL);}
+							| arr_exp inc_dec_const								{$$ = opr(ASS_EXP_A, 3, $1, mop($2), NULL);}
 							;
 const_exp					
 							: conditional_exp                 		{$$ = opr(CONST_EXP_C, 1, $1);}
@@ -229,9 +214,13 @@ unary_operator
 							| '!' 				                        {$$ = mop(NEG);}
 							;
 postfix_exp					
-							: primary_exp 		          					{$$ = $1;}				
+							: primary_exp 		          					{$$ = $1;}			
+							| arr_exp															{$$ = opr(POST_EXP, 1, $1);}
 							| id '(' argument_exp_list ')'				{$$ = opr(POST_EXP, 2, ide($1), $3);} 
 							|	id '(' ')'													{$$ = opr(POST_EXP, 2, ide($1), NULL);}
+							;
+arr_exp
+							: id '[' conditional_exp ']' 					{$$ = opr(ARR_EXP, 2, ide($1), $3);}
 							;
 primary_exp					
 							: id 																	{$$ = ide($1);}
@@ -241,6 +230,12 @@ primary_exp
 							;
 non_operable_exp
 							: string 															{$$ = str($1);}
+							| '[' initializer_list ']'						{$$ = opr(NON_OP, 1, $2);}
+							| '[' initializer_list ',' ']'				{$$ = opr(NON_OP, 1, $2);}
+							;
+initializer_list			
+							: const_exp									        {$$ = $1;}
+							| initializer_list ',' const_exp		{$$ = opr(INIT_LIST, 2, $1, $3);}
 							;
 argument_exp_list			
 							: const_exp														{$$ = $1;}
@@ -256,6 +251,7 @@ nodeType *str(stringT s) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
+	p->parent = NULL;
 	p->type = typeStr;
 	strcpy(p->str.s, s);
 	return p;
@@ -267,6 +263,7 @@ nodeType *con(int value) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
+	p->parent = NULL;
 	p->type = typeCon;
 	p->con.value = value;
 	return p;
@@ -278,6 +275,7 @@ nodeType *ide(identifierT iden) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
+	p->parent = NULL;
 	p->type = typeId;
 	strcpy(p->ide.i, iden);
 	return p;
@@ -293,6 +291,7 @@ nodeType *opr(oper_types oper, int nops, ...) {
 	if ((p->opr.op = malloc(nops * sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
+	p->parent = NULL;
 	p->type = typeOpr;
 	p->opr.oper = oper;
 	p->opr.nops = nops;
@@ -309,6 +308,7 @@ nodeType *typ(cTyp value, bool arr) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
+	p->parent = NULL;
 	p->type = typeTyp;
 	p->typ.t = value;
 	p->typ.arr = arr;
@@ -321,6 +321,7 @@ nodeType *mop(mathOp op) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
+	p->parent = NULL;
 	p->type = typeMop;
 	p->mop.op = op;
 	return p;

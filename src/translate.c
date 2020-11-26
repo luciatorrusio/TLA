@@ -31,6 +31,7 @@ static void translate_logical_or_exp(nodeType * t);
 static void translate_conditional_exp(nodeType * t);
 static void translate_non_operable_exp(nodeType * t);
 static void translate_const_exp(nodeType * t);
+static void translate_arr_exp(nodeType * t);
 static void translate_assignment_exp(nodeType * t);
 static void translate_exp(nodeType * t);
 static void translate_exp_stat(nodeType * t);
@@ -145,7 +146,7 @@ static void translate_primary_exp(nodeType * t){
 static void translate_postfix_exp(nodeType * t) {
 	fprintf(stderr, "FOUND postfix_exp\n");
 
-	if (t->opr.oper == POST_EXP && t->opr.nops == 2) {
+	if (t->type == typeOpr && t->opr.oper == POST_EXP && t->opr.nops == 2) {
 		nodeType * funName = t->opr.op[0];
 		nodeType * params = t->opr.op[1];
 		pybody("%s", funName->ide.i);
@@ -154,6 +155,9 @@ static void translate_postfix_exp(nodeType * t) {
 			translate_argument_exp_list(params);
 		}
 		pybody(")");
+	}
+	else if (t->type == typeOpr && t->opr.oper == POST_EXP && t->opr.nops == 1) {
+		translate_arr_exp(t->opr.op[0]);
 	}
 	else {
 		translate_primary_exp(t);
@@ -436,7 +440,12 @@ static void translate_conditional_exp(nodeType * t) {
 static void translate_non_operable_exp(nodeType * t) {
 	fprintf(stderr, "FOUND non_operable_exp\n");
 
-  if(t->type == typeStr){
+	if (t->type == typeOpr && t->opr.oper == NON_OP && t->opr.nops == 1) {
+		pybody("[");
+		translate_initializer_list(t->opr.op[0]);
+		pybody("]");
+	}
+  else if(t->type == typeStr){
     pybody("%s", t->str.s);
   }
 }
@@ -453,15 +462,80 @@ static void translate_const_exp(nodeType * t) {
 
 }
 
-static void translate_assignment_exp(nodeType * t){
-	fprintf(stderr, "FOUND exp\n");
+static void translate_arr_exp(nodeType * t) {
+	fprintf(stderr, "FOUND arr_exp\n");
 
-	if (t->type == typeOpr && t->opr.oper == ASS_EXP && t->opr.nops == 1) {
-		translate_init_declarator(t->opr.op[0]);
+	if (t->type == typeOpr && t->opr.oper == ARR_EXP && t->opr.nops == 2) {
+		nodeType * id = t->opr.op[0];
+		nodeType * exp = t->opr.op[1];
+		
+		pybody("%s", id->ide.i);
+		pybody("[");
+		translate_conditional_exp(exp);
+		pybody("]");
+	}
+}
+
+static void translate_assignment_exp(nodeType * t) {
+	fprintf(stderr, "FOUND assignment_exp\n");
+
+	if (t->type != typeOpr || t->opr.nops != 3 || !(t->opr.oper == ASS_EXP || t->opr.oper == ASS_EXP_A)) {
+		translate_const_exp(t);
 	}
 	else {
-	  translate_const_exp(t);
-  }
+		nodeType * left_val = t->opr.op[0];
+		nodeType * sign = t->opr.op[1];
+		nodeType * right_val = t->opr.op[2];
+		
+		if (t->opr.oper == ASS_EXP) {
+			pybody("%s", left_val->ide.i);
+		}
+		else {
+			translate_arr_exp(left_val);
+		}
+
+		if (sign == NULL) {
+			pybody(" = ");
+			translate_const_exp(right_val);
+		}
+    else if(right_val == NULL){
+      switch(sign->mop.op){
+        case INC:
+          pybody(" += 1");
+        break;
+        case DEC:
+          pybody(" -= 1");
+        break;
+      }
+    }
+    else {
+      switch(sign->mop.op){
+        case ASS_DIV:
+          pybody(" /= ");
+        break;
+        case ASS_ADD:
+          pybody(" += ");
+        break;
+        case ASS_MOD:
+          pybody(" %%= ");
+        break;
+        case ASS_R_SHIFT:
+          pybody(" >>= ");
+        break;
+        case ASS_L_SHIFT:
+          pybody(" <<= ");
+        break;
+        case ASS_SUB:
+          pybody(" -= ");
+        break;
+        case ASS_MLT:
+          pybody(" *= ");
+        break;
+      }
+
+			translate_const_exp(right_val);
+		}
+	}
 }
 
 static void translate_exp(nodeType * t){
@@ -484,7 +558,7 @@ static void translate_iteration_stat(nodeType *t){
 		nodeType * stat = t->opr.op[1];
 	
 		pybody_ind("while(");
-		translate_exp(exp);
+		translate_conditional_exp(exp);
 		pybody("):\n");
 		add_indentation();
 		translate_compound_stat(stat);
@@ -497,7 +571,7 @@ static void translate_iteration_stat(nodeType *t){
 
     translate_compound_stat(stat);
     pybody_ind("while(");
-		translate_exp(exp);
+		translate_conditional_exp(exp);
 		pybody("):\n");
 		add_indentation();
 		translate_compound_stat(stat);
@@ -511,7 +585,7 @@ static void translate_iteration_stat(nodeType *t){
 		nodeType * stat = t->opr.op[3];
 
 		pybody_ind("");
-    translate_init_declarator(init);
+    translate_assignment_exp(init);
 		pybody("\n");
     pybody_ind("while(");
 		translate_conditional_exp(condExp);
@@ -519,7 +593,7 @@ static void translate_iteration_stat(nodeType *t){
 		add_indentation();
 		translate_compound_stat(stat);
 		pybody_ind("");
-		translate_init_declarator(atLast);
+		translate_assignment_exp(atLast);
 		pybody("\n");
 		del_indentation();
   }
@@ -652,17 +726,17 @@ static void translate_direct_declarator(nodeType * t) {
 static void translate_initializer_list(nodeType * t) {
 	fprintf(stderr, "FOUND initializer_list\n");
 
-	if (t->opr.nops == 2){
+	if (t->type == typeOpr && t->opr.oper == INIT_LIST && t->opr.nops == 2){
 		fprintf(stderr, "2 argumentos\n");
 		nodeType * initializer_list = t->opr.op[0];
-		nodeType * initializer = t->opr.op[1];
+		nodeType * exp = t->opr.op[1];
     translate_initializer_list(initializer_list);
 		pybody(", ");
-		translate_initializer(initializer);
+		translate_const_exp(exp);
   } 
 	else {
 		fprintf(stderr, "0 argumentos\n");
-		translate_initializer(t);
+		translate_const_exp(t);
 	}
 }
 
@@ -685,12 +759,12 @@ static void translate_init_def_declarator(nodeType * t){
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DEF_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
-		nodeType * initializer = t->opr.op[1];
+		nodeType * exp = t->opr.op[1];
 
-		if(initializer != NULL){
+		if(exp != NULL){
 			pybody("%s", id->ide.i);
 			pybody(" = ");
-			translate_initializer(initializer);
+			translate_const_exp(exp);
 		}
 
 	}
@@ -789,7 +863,8 @@ static void	translate_param_decl(nodeType * t) {
 	fprintf(stderr, "FOUND param_decl\n");
 
   if (t->type == typeOpr && t->opr.oper == PARAM_DECL && t->opr.nops == 2) {
-		translate_direct_declarator(t->opr.op[1]);
+		nodeType * id = t->opr.op[1];
+		pybody("%s", id->ide.i);
 	}
 }
 

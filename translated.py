@@ -1,16 +1,7 @@
-def factorial(x):
-	
-	resp = 1
-	i = 1
-	while(int( i <= x )):
-		resp *= i
-		i += 1
-
-	return resp
-
 def main():
-	var = factorial(( 5 % 10 ))
-	print("Resultado:", var)
+	a = [0, 2, 3]
+	a[0] = a[( 0 + 1 )]
+	print(a)
 	return 0
 
 main()
