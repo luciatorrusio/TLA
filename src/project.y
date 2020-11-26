@@ -56,7 +56,7 @@
 %type <nPtr> stat exp exp_stat compound_stat jump_stat stat_list conditional_exp const_exp assignment_exp 
 %type <nPtr> logical_or_exp logical_and_exp inclusive_or_exp exclusive_or_exp and_exp equality_exp relational_exp 
 %type <nPtr> shift_exp additive_exp mult_exp unary_exp postfix_exp primary_exp argument_exp_list
-%type <nPtr> decl decl_list initializer_list param_decl_list param_decl type_qualifier init_def_declarator
+%type <nPtr> decl initializer_list param_decl_list param_decl type_qualifier init_def_declarator
 %type <nPtr> selection_stat iteration_stat unary_operator non_operable_exp arr_exp
 
 %start program
@@ -82,10 +82,6 @@ function_definition
 decl						
               : type_qualifier init_def_declarator ';'  {$$ = opr(DECL, 2, $1, $2);} 
 							;
-decl_list					
-              : decl														    {$$ = $1;}
-							| decl_list decl											{$$ = opr(DECL_LIST, 2, $1, $2);}
-							;
 init_def_declarator				
               : id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
 							| id '=' const_exp										{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);}
@@ -106,8 +102,8 @@ function_declarator
 							| '(' ')'															{$$ = opr(FUNC_DEC, 0);}
 							;
 stat						
-							: exp_stat 											    	{$$ = opr(EXP_STAT, 1, $1);}
-							| compound_stat 									  	{$$ = opr(COMP_STAT, 1, $1);}
+							: decl																{$$ = opr(DECL_STAT, 1, $1);}
+							| exp_stat 											    	{$$ = opr(EXP_STAT, 1, $1);}
 							| selection_stat 											{$$ = opr(SEL_STAT, 1, $1);}
 							| jump_stat														{$$ = opr(JUMP_STAT, 1, $1);}
               | iteration_stat											{$$ = opr(ITER_STAT, 1, $1);}
@@ -116,9 +112,7 @@ exp_stat
 							: exp ';'													    {$$ = $1;}
 							;
 compound_stat				
-							: '{' decl_list stat_list '}'         {$$ = opr(COMP_STAT, 2, $2, $3);}
-							| '{' decl_list '}'         					{$$ = opr(COMP_STAT, 2, $2, NULL);}
-							| '{' stat_list '}'         					{$$ = opr(COMP_STAT, 2, NULL, $2);}
+							: '{' stat_list '}'         					{$$ = opr(COMP_STAT, 1, $2);}
 							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
 							;
 selection_stat				

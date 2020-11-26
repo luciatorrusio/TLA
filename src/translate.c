@@ -657,8 +657,8 @@ static void translate_stat(nodeType * t){
 			case EXP_STAT:
 					translate_exp_stat(stat);
 				break;
-			case COMP_STAT:
-					translate_compound_stat(stat);
+			case DECL_STAT:
+					translate_decl(stat);
 				break;
 			case SEL_STAT:
 					translate_selection_stat(stat);
@@ -772,16 +772,10 @@ static void translate_decl_list(nodeType * t){
 static void translate_compound_stat(nodeType * t) {
 	fprintf(stderr, "FOUND compound_stat\n");
 
-	if (t->type == typeOpr && t->opr.oper == COMP_STAT && t->opr.nops == 2) {
-		nodeType * decl_list = t->opr.op[0];
-		nodeType * stat_list = t->opr.op[1]; 
+	if (t->type == typeOpr && t->opr.oper == COMP_STAT && t->opr.nops == 1) {
+		nodeType * stat_list = t->opr.op[0];
 
-		if (decl_list != NULL) {
-			translate_decl_list(decl_list);
-		}
-		if (stat_list != NULL) {
-			translate_stat_list(stat_list);
-		}
+		translate_stat_list(stat_list);
 	}
 
 }

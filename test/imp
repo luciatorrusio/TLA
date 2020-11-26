@@ -2,5 +2,9 @@ int main() {
   int[] a = [0, 2, 3];
   a[0] = a[0+1];
   print(a);
+
+  int b = 3;
+
+  print(b + a);
   return 0;
 }
