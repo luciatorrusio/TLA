@@ -34,6 +34,6 @@ struct var_info {
   struct var_info * next;
 };
 
-void process_tree(nodeType * root, bool * success);
+void process_tree(nodeType * root, char * output_file_name, bool * success);
 
 #endif
