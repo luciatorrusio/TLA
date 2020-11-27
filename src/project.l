@@ -38,7 +38,7 @@
 "-="																											{yylval.mOp = ASS_SUB; return ass_eq;}
 "<<="																											{yylval.mOp = ASS_L_SHIFT; return ass_eq;}
 [0-9]+																										{yylval.iValue = atoi(yytext); return int_const;}
-[0-9]+"."[0-9]+																						{strcpy(yylval.sArr, yytext); return float_const;}	
+[0-9]+"."[0-9]+([eE][-+]?[0-9]+)?																				{strcpy(yylval.sArr, yytext); return float_const;}	
 [a-zA-Z_][a-zA-Z_0-9]*			 															{strcpy(yylval.ident, yytext); return id;}
 \"(\\.|[^\"])*\"																					{strcpy(yylval.sArr, yytext); return string;}
 "//"(\\.|[^\n])*[\n]																			;
