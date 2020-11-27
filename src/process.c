@@ -37,6 +37,7 @@ static void add_restorable_var_to_list(struct restorable_var_info * rest);
 static void add_symbol_to_current_context(typNodeType * type, idNodeType * id);
 static void add_symbols_func_param(nodeType * t);
 static void add_symbols_func(nodeType * t);
+static void assert_return_stmts_type(nodeType * t, typNodeType * type, bool * errored);
 static void assert_type_rec(nodeType * t, cTyp typ, bool * errored);
 static void assert_type_arr(nodeType * init_list, cTyp typ, bool * errored);
 static void assert_function_returns_type(nodeType * id, typNodeType * type, bool * errored);
@@ -673,6 +674,23 @@ static void add_symbols_func(nodeType * t) {
 	}
 }
 
+static void assert_return_stmts_type(nodeType * t, typNodeType * type, bool * errored) {
+	if (t == NULL) {
+		return;
+	}
+
+	if (t->type == typeOpr) {
+		if (t->opr.oper == RET) {
+			assert_type(t->opr.op[0], type, errored);
+		}
+		else {
+			for (unsigned int i = 0; i < t->opr.nops; i++) {
+				assert_return_stmts_type(t->opr.op[i], type, errored);
+			}
+		}
+	}
+}
+
 static void assert_type_arr(nodeType * init_list, cTyp typ, bool * errored) {
 	if(init_list == NULL) {
 		return;
@@ -763,6 +781,11 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 					}
 					break;
 				case ADD_EXP:
+					if (typ != floatTyp && typ != intTyp) {
+						*errored = true;
+						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
+					}
+					break;
 				case MULT_EXP:
 					if ((t->opr.op[1]->mop.op == DIV || t->opr.op[1]->mop.op == AST) && typ != floatTyp && typ != intTyp) {
 						*errored = true;
@@ -840,7 +863,7 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 			}
 			break;
 		case typeCon:
-			if (typ != intTyp) {
+			if (typ != floatTyp && typ != intTyp) {
 				*errored = true;
 				fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
 			}
@@ -1096,6 +1119,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					fprintf(stderr, "BUILDING FUNCTION CONTEXT\n");
 					create_context();
 					add_symbols_func(t->opr.op[2]);
+					assert_return_stmts_type(t->opr.op[3]->opr.op[0], &(t->opr.op[0]->typ), errored);
 					check_types_rec(t->opr.op[3]->opr.op[0], errored);
 					delete_current_context();
 				}
@@ -1271,10 +1295,6 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				assert_type(t->opr.op[2], &type, errored);
 				check_types_rec(t->opr.op[2], errored);
 				break;
-			case EQU_EXP:
-			case REL_EXP:
-			case SHI_EXP:
-			case ADD_EXP:
 			case MULT_EXP:
 				if(t->opr.oper == MULT_EXP && (t->opr.op[1]->mop.op == DIV || t->opr.op[1]->mop.op == MOD)) {
 					fprintf(stderr, "CHECKING INT_EXP\n");
@@ -1286,6 +1306,18 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					type.arr = false;
 					type.t = floatTyp;
 				}
+				assert_type(t->opr.op[0], &type, errored);
+				check_types_rec(t->opr.op[0], errored);
+				assert_type(t->opr.op[2], &type, errored);
+				check_types_rec(t->opr.op[2], errored);
+				break;
+			case EQU_EXP:
+			case REL_EXP:
+			case SHI_EXP:
+			case ADD_EXP:
+				fprintf(stderr, "CHECKING FLOAT_EXP\n");
+				type.arr = false;
+				type.t = floatTyp;
 				assert_type(t->opr.op[0], &type, errored);
 				check_types_rec(t->opr.op[0], errored);
 				assert_type(t->opr.op[2], &type, errored);

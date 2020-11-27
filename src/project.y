@@ -117,12 +117,11 @@ compound_stat
 							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
 							;
 selection_stat				
-							: IF '(' exp ')' compound_stat 											{$$ = opr(IF_STAT, 3, $3, $5, NULL);}
-							| IF '(' exp ')' compound_stat ELSE compound_stat		{$$ = opr(IF_STAT, 3, $3, $5, $7);}
+							: IF '(' conditional_exp ')' compound_stat 											{$$ = opr(IF_STAT, 3, $3, $5, NULL);}
+							| IF '(' conditional_exp ')' compound_stat ELSE compound_stat		{$$ = opr(IF_STAT, 3, $3, $5, $7);}
 							;
 jump_stat					
-							: RETURN exp ';'											{$$ = opr(RET, 1, $2);}
-							| RETURN ';'													{$$ = opr(RET, 0);}
+							: RETURN const_exp ';'											{$$ = opr(RET, 1, $2);}
 							;
 iteration_stat				
               : WHILE '(' conditional_exp ')' compound_stat			{$$ = opr(WHILE_STAT, 2, $3, $5);}

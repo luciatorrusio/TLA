@@ -616,7 +616,7 @@ static void translate_selection_stat(nodeType * t) {
     nodeType * elseStat = t->opr.op[2];
     
 		pybody_ind("if (");
-		translate_exp(exp);
+		translate_conditional_exp(exp);
 		pybody("):\n");
 		add_indentation();
 		translate_compound_stat(ifStat);
@@ -636,15 +636,11 @@ static void translate_selection_stat(nodeType * t) {
 static void translate_jump_stat(nodeType * t) {
 	fprintf(stderr, "FOUND jump_stat\n");
 	
-  if(t->opr.oper == RET){
+  if(t->opr.oper == RET && t->opr.nops == 1){
     pybody_ind("return ");
-    if(t->opr.nops==1){   
-      translate_exp(t->opr.op[0]);
-    }else {
-      pybody("\n");
-    }
+
+		translate_const_exp(t->opr.op[0]);
   }
-	
 
 }
 
