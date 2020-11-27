@@ -1,9 +1,5 @@
 int main() {
-  string[] var = "Hola";
-
-  var[4] <<= 2;
-  
-  print("Resultado:", var);
-
+  int a = 3;
+  string[] var = [a];
   return 0;
 }

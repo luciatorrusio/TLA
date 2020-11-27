@@ -89,13 +89,13 @@ static void del_indentation() {
 static void translate_argument_exp_list(nodeType * t) {
 	fprintf(stderr, "FOUND argument_exp_list\n");
 
-  if(t->type == typeOpr && t->opr.oper == ARG_EXP_LIST && t->opr.nops == 2) {
+	if(t->type == typeOpr && t->opr.oper == ARG_EXP_LIST && t->opr.nops == 2) {
 		fprintf(stderr, "2 argumentos\n");
 		nodeType * list = t->opr.op[0];
 		nodeType * terminal = t->opr.op[1];
 		translate_argument_exp_list(list);
 		pybody(", ");
-    translate_const_exp(terminal);
+		translate_const_exp(terminal);
 	}
 	else {
 		fprintf(stderr, "0 argumentos\n");
@@ -695,7 +695,7 @@ static void translate_stat_list(nodeType * t){
 static void translate_decl(nodeType * t){
 	fprintf(stderr, "FOUND decl\n");
 	
-  if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
+  	if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
 		nodeType * in = t->opr.op[1];
 		pybody_ind("");
 		translate_init_def_declarator(in);
@@ -709,10 +709,10 @@ static void translate_initializer_list(nodeType * t) {
 		fprintf(stderr, "2 argumentos\n");
 		nodeType * initializer_list = t->opr.op[0];
 		nodeType * exp = t->opr.op[1];
-    translate_initializer_list(initializer_list);
+		translate_initializer_list(initializer_list);
 		pybody(", ");
 		translate_const_exp(exp);
-  } 
+	}
 	else {
 		fprintf(stderr, "0 argumentos\n");
 		translate_const_exp(t);

@@ -5,7 +5,7 @@
 
 typedef enum { typeCon, typeFco, typeStr, typeId, typeOpr, typeTyp, typeMop } nodeEnum;
 
-typedef enum { imageTyp, intTyp, stringTyp, floatTyp } cTyp;
+typedef enum { imageTyp = 0, intTyp, stringTyp, floatTyp } cTyp;
 
 typedef enum {  AMP, PLS, AST, NEG, DIV, MNS, TIL, MOD, L_THAN, G_THAN, L_SHF, R_SHF, GE_THAN, 
                 LE_THAN, EQ, NEQ, AND, EXCL_OR, OR, LOG_AND, LOG_OR, INC, DEC, ASS_MLT,

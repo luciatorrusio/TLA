@@ -13,6 +13,13 @@ struct restorable_var_info {
 	struct restorable_var_info * next;
 };
 
+struct node_list {
+	nodeType * arg;
+	struct node_list * next;
+};
+
+static char *types[] = {"img", "int", "string", "float"};
+
 static void init_functions_h(void);
 static void init_symbols_h(void);
 
@@ -30,8 +37,17 @@ static void add_restorable_var_to_list(struct restorable_var_info * rest);
 static void add_symbol_to_current_context(typNodeType * type, idNodeType * id);
 static void add_symbols_func_param(nodeType * t);
 static void add_symbols_func(nodeType * t);
-static void assert_type_rec(nodeType * t, typNodeType * type, bool * errored);
+static void assert_type_rec(nodeType * t, cTyp typ, bool * errored);
+static void assert_type_arr(nodeType * init_list, cTyp typ, bool * errored);
+static void assert_function_returns_type(nodeType * id, typNodeType * type, bool * errored);
+static void assert_variable_type(nodeType * id, typNodeType * type, bool * errored);
 static void assert_type(nodeType * t, typNodeType * type, bool * errored);
+static void assert_variable_exists(nodeType * id, bool * errored);
+static struct node_list * prepare_params(nodeType * args);
+static void free_node_list(struct node_list * node_list);
+static void assert_function_params_variable(identifierT id, typNodeType * type, struct node_list * args, bool * errored);
+static void assert_function_params(identifierT id, paramNode * fun_param, struct node_list * args, int line, bool * errored);
+static void assert_function_exists(nodeType * id, nodeType * args, bool * errored);
 static int get_symbol_type(identifierT id, typNodeType * type);
 static void check_types_rec(nodeType * t, bool * errored);
 static void check_types(nodeType * t, bool * errored);
@@ -347,6 +363,18 @@ static struct function_info_basic native_funcs_basic[] = {
 			},
 		}
 	},
+	{
+		.ret = {intTyp},
+		.id = "int",
+		.p_variable = false,
+		.p_amount = 1,
+		.p_params = {
+			{
+				.t = floatTyp,
+				.arr = false
+			},
+		}
+	},
 };
 
 // Global list of all functions info allocated
@@ -645,76 +673,324 @@ static void add_symbols_func(nodeType * t) {
 	}
 }
 
-static void assert_type_rec(nodeType * t, typNodeType * type, bool * errored) {
+static void assert_type_arr(nodeType * init_list, cTyp typ, bool * errored) {
+	if(init_list == NULL) {
+		return;
+	}
+
+	typNodeType type;
+	type.t = typ;
+	type.arr = false;
+
+	if (init_list->type == typeOpr && init_list->opr.oper == INIT_LIST && init_list->opr.nops == 2) {
+	 	nodeType * initializer_list = init_list->opr.op[0];
+	 	nodeType * exp = init_list->opr.op[1];
+
+		assert_type_arr(initializer_list, typ, errored);
+		assert_type(exp, &type, errored);
+	}
+	else {
+		assert_type(init_list, &type, errored);
+	}
+}
+
+static void assert_function_returns_type(nodeType * id, typNodeType * type, bool * errored) {
+	khiter_t k;
+
+	struct function_info * f = kh_get_val(functions_table, functions_h, id->ide.i, NULL);
+	if (f != NULL) {
+		if (type->t != f->ret.t || type->arr != f->ret.arr) {
+			*errored = true;
+			fprintf(stderr, "Error: Expected %s%s, but found function '%s' that returns type %s%s\n", types[type->t], type->arr ? "[]":"", id->ide.i, types[f->ret.t], f->ret.arr ? "[]":"");
+		}
+	}
+	else {
+		// Later this will be marked as an error
+	}
+}
+
+static void assert_variable_type(nodeType * id, typNodeType * type, bool * errored) {
+	khiter_t k;
+
+	struct var_info * v = kh_get_val(symbols_table, symbols_h, id->ide.i, NULL);
+	if (v != NULL) {
+		if (type->t != v->type.t || type->arr != v->type.arr) {
+			*errored = true;
+			fprintf(stderr, "Error: Expected %s%s, but found variable '%s' of type %s%s\n", types[type->t], type->arr ? "[]":"", id->ide.i, types[v->type.t], v->type.arr ? "[]":"");
+		}
+	}
+	else {
+		// Later this will be marked as an error
+	}
+}
+
+static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
+	khiter_t k;
+	struct var_info * v;
+	struct function_info * f;
 	unsigned int i;
 	
-	if (t->type == typeOpr) {
-		switch(t->opr.oper) {
-			case CONST_EXP_C:
-				break;
-			case CONST_EXP_N:
-				break;
-			case LOG_OR_EXP:
-				break;
-			case LOG_AND_EXP:
-				break;
-			case OR_EXP:
-				break;
-			case EXCL_OR_EXP:
-				break;
-			case AND_EXP:
-				break;
-			case EQU_EXP:
-				break;
-			case REL_EXP:
-				break;
-			case SHI_EXP:
-				break;
-			case ADD_EXP:
-				break;
-			case MULT_EXP:
-				break;
-			case UNARY_EXP_OP:
-				break;
+	if (t == NULL) {
+		return;
+	}
 
-			// check types and function return type
-			case POST_EXP:
-				break;
+	switch(t->type) {
+		case typeOpr:
+			switch(t->opr.oper) {
+				case CONST_EXP_C:
+					assert_type_rec(t->opr.op[0], typ, errored);
+					break;
+				case CONST_EXP_N:
+					if (typ != stringTyp) {
+						*errored = true;
+						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[stringTyp], t->line);
+					}
+					else {
+						assert_type_rec(t->opr.op[0], typ, errored);
+					}
+					break;
+				case LOG_OR_EXP:
+				case LOG_AND_EXP:
+				case OR_EXP:
+				case EXCL_OR_EXP:
+				case AND_EXP:
+				case EQU_EXP:
+				case REL_EXP:
+				case SHI_EXP:
+					if (typ != intTyp) {
+						*errored = true;
+						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
+					}
+					break;
+				case ADD_EXP:
+				case MULT_EXP:
+					if ((t->opr.op[1]->mop.op == DIV || t->opr.op[1]->mop.op == AST) && typ != floatTyp && typ != intTyp) {
+						*errored = true;
+						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[floatTyp], t->line);
+					}
+					else if (t->opr.op[1]->mop.op == MOD && typ != intTyp) {
+						*errored = true;
+						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
+					}
+					break;
+				case UNARY_EXP_OP:
+					switch(t->opr.op[1]->mop.op) {
+						case MNS:
+						case NEG:
+							if (typ != floatTyp && typ != intTyp) {
+								*errored = true;
+								fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[floatTyp], t->line);
+							}
+							break;
+						case TIL:
+							if (typ != intTyp) {
+								*errored = true;
+								fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
+							}
+							break;
+						default:
+							break;
+					}
+					break;
 
-			// arr
-			case NON_OP:
-				break;
-			default:
-				for (i = 0; i < t->opr.nops; i++) {
-					assert_type_rec(t->opr.op[i], type, errored);
+				// array
+				case ARR_EXP:
+					v = kh_get_val(symbols_table, symbols_h, t->ide.i, NULL);
+					if (v != NULL) {
+						if (!v->type.arr || v->type.t != typ) {
+							*errored = true;
+							fprintf(stderr, "Error: Expected %s, but found variable '%s' of type %s%s (line %d)\n", types[typ], t->ide.i, types[v->type.t], v->type.arr ? "[]":"", t->line);
+						}
+					}
+					break;
+
+				// check function return type (types are checked separately)
+				case POST_EXP:
+					f = kh_get_val(functions_table, functions_h, t->opr.op[0]->ide.i, NULL);
+					if (f != NULL) {
+						if (f->ret.arr || f->ret.t != typ) {
+							*errored = true;
+							fprintf(stderr, "Error: Expected %s, but found functions '%s' that returns type %s%s (line %d)\n", types[typ], t->ide.i, types[f->ret.t], f->ret.arr ? "[]":"", t->line);
+						}
+					}
+					break;
+
+				// array right val
+				case NON_OP:
+					*errored = true;
+					fprintf(stderr, "Error: Expected %s, but found array (line %d)\n", types[typ], t->line);
+					break;
+				default:
+					for (i = 0; i < t->opr.nops; i++) {
+						assert_type_rec(t->opr.op[i], typ, errored);
+					}
+					break;
+			}
+			break;
+		case typeStr:
+			if (typ != stringTyp) {
+				*errored = true;
+				fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[stringTyp], t->line);
+			}
+			break;
+		case typeFco:
+			if (typ != floatTyp) {
+				*errored = true;
+				fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[floatTyp], t->line);
+			}
+			break;
+		case typeCon:
+			if (typ != intTyp) {
+				*errored = true;
+				fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
+			}
+			break;
+		case typeId:
+			v = kh_get_val(symbols_table, symbols_h, t->ide.i, NULL);
+			if (v != NULL) {
+				if (v->type.arr || v->type.t != typ) {
+					*errored = true;
+					fprintf(stderr, "Error: Expected %s, but found variable '%s' of type %s%s (line %d)\n", types[typ], t->ide.i, types[v->type.t], v->type.arr ? "[]":"", t->line);
 				}
-				break;
-		}
+			}
+			else {
+				// Later this will be marked as an error
+			}
+			break;
+		default:
+			break;
 	}
 }
 
 static void assert_type(nodeType * t, typNodeType * type, bool * errored) {
-	char * typeName;
-
-	switch(type->t) {
-		case imageTyp:
-			typeName = "Image";
-			break;
-		case intTyp:
-			typeName = "Integer";
-			break;
-		case floatTyp:
-			typeName = "Float";
-			break;
-		case stringTyp:
-			typeName = "String";
-			break;
-	}
-
-	fprintf(stderr, "ASSERTING FOR TYPE: %s%s\n", typeName, type->arr ? "[]":"");
+	fprintf(stderr, "ASSERTING FOR TYPE: %s%s\n", types[type->t], type->arr ? "[]":"");
 
 	// Check every node asserting type
-	assert_type_rec(t, type, errored);
+	if (type->arr) {
+		if (t->type == typeOpr && t->opr.oper == CONST_EXP_N && t->opr.op[0]->opr.oper == NON_OP) {
+			assert_type_arr(t->opr.op[0]->opr.op[0], type->t, errored);
+		}
+		else if (t->type == typeOpr && t->opr.oper == CONST_EXP_C) {
+			if (t->opr.op[0]->opr.oper == POST_EXP && t->opr.op[0]->opr.nops == 2) {
+				assert_function_returns_type(t->opr.op[0]->opr.op[0], type, errored);
+			}
+			else if (t->opr.op[0]->type == typeId) {
+				assert_variable_type(t->opr.op[0], type, errored);
+			}
+			else {
+				*errored = true;
+				fprintf(stderr, "Error: Expected array declaration (line %d)\n", t->line);
+			}
+		}
+		else {
+			*errored = true;
+			fprintf(stderr, "Error: Expected array declaration (line %d)\n", t->line);
+		}
+	}
+	else {
+		assert_type_rec(t, type->t, errored);
+	}
+}
+
+static void assert_variable_exists(nodeType * id, bool * errored) {
+	khiter_t k;
+
+	struct var_info * v = kh_get_val(symbols_table, symbols_h, id->ide.i, NULL);
+	if (v == NULL) {
+		*errored = true;
+		fprintf(stderr, "Error: Variable '%s' undeclared (line %d)\n", id->ide.i, id->line);
+	}
+}
+
+static struct node_list * prepare_params(nodeType * args) {
+	if(args == NULL) {
+		return NULL;
+	}
+	
+	if(args->type == typeOpr && args->opr.oper == ARG_EXP_LIST && args->opr.nops == 2) {
+		nodeType * list = args->opr.op[0];
+		nodeType * terminal = args->opr.op[1];
+
+		struct node_list * ret = prepare_params(list);
+		
+		struct node_list * new_node = calloc(1, sizeof(struct node_list));
+		new_node->arg = terminal;
+		return ret;
+	}
+	else {
+		struct node_list * new_node = calloc(1, sizeof(struct node_list));
+		new_node->arg = args;
+		return new_node;
+	}
+}
+
+static void free_node_list(struct node_list * node_list) {
+	struct node_list * curr = node_list;
+	struct node_list * prev = curr;
+
+	while(prev != NULL) {
+		curr = prev->next;
+		free(prev);
+		prev = curr;
+	}
+}
+
+static void assert_function_params_variable(identifierT id, typNodeType * type, struct node_list * args, bool * errored) {
+	fprintf(stderr, "ASSERTING ARGS FROM FUNCTION: %s\n", id);
+	
+	if(args == NULL) return;
+	
+	assert_type(args->arg, type, errored);
+	if(!errored) {
+		assert_function_params_variable(id, type, args->next, errored);
+	}
+}
+
+static void assert_function_params(identifierT id, paramNode * fun_param, struct node_list * args, int line, bool * errored) {
+	fprintf(stderr, "ASSERTING ARGS FROM FUNCTION: %s\n", id);
+
+	if(fun_param == NULL && args != NULL) {
+		*errored = true;
+		fprintf(stderr, "Error: No argument expected in function '%s' and received %s%s (line %d)\n", id, types[args->arg->typ.t], args->arg->typ.arr ? "[]":"",args->arg->line);
+		return;
+	}
+
+	if(fun_param != NULL && args == NULL) {
+		*errored = true;
+		fprintf(stderr, "Error: %s%s expected in function '%s' and received none (line %d)\n", types[fun_param->p.t], fun_param->p.arr ? "[]":"", id, line);
+		return;
+	}
+	
+	if(fun_param == NULL && args == NULL) return;
+
+	assert_type(args->arg, &fun_param->p, errored);
+	if(!errored) {
+		assert_function_params(id, fun_param->next, args->next, args->arg->line, errored);
+	}
+}
+
+static void assert_function_exists(nodeType * id, nodeType * args, bool * errored) {
+	fprintf(stderr, "ASSERTING FUNCTION '%s' EXISTS\n", id->ide.i);
+	khiter_t k;
+
+	struct function_info * s = kh_get_val(functions_table, functions_h, id->ide.i, NULL);
+	if (s != NULL) {
+		if (strcmp(id->ide.i, "print") == 0) {
+			return;
+		}
+
+		if (s->params.variable) {
+			typNodeType type;
+			type.arr = s->params.params->p.arr;
+			type.t = s->params.params->p.t;
+			assert_function_params_variable(id->ide.i, &type, prepare_params(args), errored);
+		}
+		assert_function_params(id->ide.i, s->params.params, prepare_params(args), id->line, errored);
+	}
+	else {
+		*errored = true;
+		fprintf(stderr, "Error: Undeclared function '%s' (line %d)\n", id->ide.i, id->line);
+	}
 }
 
 static int get_symbol_type(identifierT id, typNodeType * type) {
@@ -803,12 +1079,18 @@ static int get_symbol_type(identifierT id, typNodeType * type) {
 							;							
 */
 static void check_types_rec(nodeType * t, bool * errored) {
+	if (t == NULL) {
+		return;
+	}
+	
 	unsigned int i;
 	int res;
 	typNodeType type;
 	
-	if (t != NULL && t->type == typeOpr) {
+	if (t->type == typeOpr) {
 		switch(t->opr.oper) {
+			
+			// Context creators
 			case FUNC_DEF:
 				if (t->opr.op[3]->opr.nops > 0) {
 					fprintf(stderr, "BUILDING FUNCTION CONTEXT\n");
@@ -826,19 +1108,25 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					delete_current_context();
 				}
 				break;
+
+			// Declarators
 			case DECL:
 				fprintf(stderr, "ADDING VARIABLES AND CHECKING - DECL FOUND\n");
 				add_symbol_to_current_context(&(t->opr.op[0]->typ), &(t->opr.op[1]->opr.op[0]->ide));
 				if (t->opr.op[1]->opr.op[1] != NULL) {
 					assert_type(t->opr.op[1]->opr.op[1], &(t->opr.op[0]->typ), errored);
+					check_types_rec(t->opr.op[1]->opr.op[1], errored);
 				}
 				break;
+
+			// Assignments
 			case ASS_EXP:
 				if (t->opr.op[1] == NULL) { // '='
 					fprintf(stderr, "ASSIGNMENT TO VARIABLE (=): %s\n", t->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						assert_type(t->opr.op[2], &type, errored);
+						check_types_rec(t->opr.op[2], errored);
 					}
 					else {
 						*errored = true;
@@ -856,13 +1144,13 @@ static void check_types_rec(nodeType * t, bool * errored) {
 							}
 							type.t = intTyp;
 							assert_type(t->opr.op[2], &type, errored);
+							check_types_rec(t->opr.op[2], errored);
 						}
 						else {
-							if (type.t == floatTyp) {
+							if (type.t == floatTyp || type.t == intTyp) {
+								type.t = floatTyp;
 								assert_type(t->opr.op[2], &type, errored);
-							}
-							else if (type.t == intTyp) {
-								assert_type(t->opr.op[2], &type, errored);
+								check_types_rec(t->opr.op[2], errored);
 							}
 							else {
 								*errored = true;
@@ -900,6 +1188,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 						}
 						type.arr = false;
 						assert_type(t->opr.op[2], &type, errored);
+						check_types_rec(t->opr.op[2], errored);
 					}
 					else {
 						*errored = true;
@@ -922,15 +1211,14 @@ static void check_types_rec(nodeType * t, bool * errored) {
 							type.arr = false;
 							type.t = intTyp;
 							assert_type(t->opr.op[2], &type, errored);
+							check_types_rec(t->opr.op[2], errored);
 						}
 						else {
-							if (type.t == floatTyp) {
+							if (type.t == floatTyp || type.t == intTyp) {
 								type.arr = false;
+								type.t = floatTyp;
 								assert_type(t->opr.op[2], &type, errored);
-							}
-							else if (type.t == intTyp) {
-								type.arr = false;
-								assert_type(t->opr.op[2], &type, errored);
+								check_types_rec(t->opr.op[2], errored);
 							}
 							else {
 								*errored = true;
@@ -966,6 +1254,80 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				type.t = intTyp;
 				type.arr = false;
 				assert_type(t->opr.op[0]->opr.op[1], &type, errored);
+				check_types_rec(t->opr.op[0]->opr.op[1], errored);
+				break;
+
+			// Other checks
+			case LOG_OR_EXP:
+			case LOG_AND_EXP:
+			case OR_EXP:
+			case EXCL_OR_EXP:
+			case AND_EXP:
+				fprintf(stderr, "CHECKING INT_EXP\n");
+				type.arr = false;
+				type.t = intTyp;
+				assert_type(t->opr.op[0], &type, errored);
+				check_types_rec(t->opr.op[0], errored);
+				assert_type(t->opr.op[2], &type, errored);
+				check_types_rec(t->opr.op[2], errored);
+				break;
+			case EQU_EXP:
+			case REL_EXP:
+			case SHI_EXP:
+			case ADD_EXP:
+			case MULT_EXP:
+				if(t->opr.oper == MULT_EXP && (t->opr.op[1]->mop.op == DIV || t->opr.op[1]->mop.op == MOD)) {
+					fprintf(stderr, "CHECKING INT_EXP\n");
+					type.arr = false;
+					type.t = intTyp;
+				}
+				else {
+					fprintf(stderr, "CHECKING FLOAT_EXP\n");
+					type.arr = false;
+					type.t = floatTyp;
+				}
+				assert_type(t->opr.op[0], &type, errored);
+				check_types_rec(t->opr.op[0], errored);
+				assert_type(t->opr.op[2], &type, errored);
+				check_types_rec(t->opr.op[2], errored);
+				break;
+			case UNARY_EXP_OP:
+				fprintf(stderr, "CHECKING UNARY_INT_EXP\n");
+				type.arr = false;
+				switch(t->opr.op[1]->mop.op) {
+					case MNS:
+					case NEG:
+						type.t = floatTyp;
+						assert_type(t->opr.op[0], &type, errored);
+						check_types_rec(t->opr.op[0], errored);
+						break;
+					case TIL:
+						type.t = intTyp;
+						assert_type(t->opr.op[0], &type, errored);
+						check_types_rec(t->opr.op[0], errored);
+						break;
+					default:
+						break;
+				}
+				break;
+
+			// check function exist
+			case POST_EXP:
+				fprintf(stderr, "CHECKING POST_EXP\n");
+				if (t->opr.nops == 1) {
+					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
+					if (res == 0) {
+						if (!type.arr) {
+							*errored = true;
+							fprintf(stderr, "Error: Variable '%s' must be an array (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
+						}
+					}
+				}
+				else {
+					fprintf(stderr, "POST_EXP --> ASSERTING FUNCTION '%s' EXISTS\n", t->opr.op[0]->ide.i);
+					assert_function_exists(t->opr.op[0], t->opr.op[1], errored);
+					check_types_rec(t->opr.op[1], errored);
+				}
 				break;
 			default:
 				for (i = 0; i < t->opr.nops; i++) {
@@ -973,6 +1335,9 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				}
 				break;
 		}
+	}
+	else if (t->type == typeId) {
+		assert_variable_exists(t, errored);
 	}
 }
 
