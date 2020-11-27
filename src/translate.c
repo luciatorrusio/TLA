@@ -827,31 +827,7 @@ static void translate_trans_unit(nodeType * t) {
 static void translate_program_unit(nodeType * t){
 	fprintf(stderr, "FOUND program_unit\n");
 
-	if(t->type == typeOpr && t->opr.nops == 2 && t->opr.oper == PROG_HEADER) {
-		nodeType * header = t->opr.op[0];		
-		nodeType * prog_unit = t->opr.op[1];
-		if(header->type == typeStr) {
-			// #include                                                                  "   myArchivoDePython.py"
-			char * beg = strchr(header->str.s, '"');
-			char * last = strrchr(header->str.s, '"');
-			int realLen = (last - 1) - (beg + 1) + 1;
-			if (realLen >= 0) {
-				char inc[realLen+1];
-				strncpy(inc, beg+1, realLen);
-				inc[realLen] = 0;
-				for(unsigned int i = 0; i <= strlen(inc); i++) {
-					if(inc[i] == '/' || inc[i] == '\\') {
-						inc[i] = '.';
-					}
-				}
-				pybody("from %s import * \n", inc);
-				translate_program_unit(prog_unit);
-			}
-		}
-	}
-	else {
-		translate_trans_unit(t);
-	}
+	translate_trans_unit(t);
 }
 
  

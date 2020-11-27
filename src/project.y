@@ -37,19 +37,17 @@
 		mathOp mOp;
 };
 
-// %token int_const float_const id string type_const DEFINE
-%token DEFINE IF FOR IN DO WHILE BREAK SWITCH CONTINUE RETURN CASE DEFAULT PUNC
+%token IF FOR IN DO WHILE RETURN
 %token or_const and_const
 %token param_const ELSE
 %left '+' '-'
 %left '*' '/'
 %nonassoc THEN
 %nonassoc ELSE
-//%define parse.error verbose
 
 %token <mOp> ass_eq eq_const shift_const rel_const inc_dec_const
 %token <cType> type_const
-%token <sArr> string HEADER float_const
+%token <sArr> string float_const
 %token <iValue> int_const
 %token <ident> id
 
@@ -68,7 +66,6 @@ program
 							; 
 program_unit	
               : translation_unit										{$$ = $1;}
-							| HEADER program_unit									{$$ = opr(PROG_HEADER, 2, str($1), $2);}
 							;
 translation_unit			
               : external_decl 							        {$$ = $1;}						
