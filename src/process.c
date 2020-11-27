@@ -292,6 +292,61 @@ static struct function_info_basic native_funcs_basic[] = {
 			},
 		}
 	},
+	{
+		.ret = {stringTyp},
+		.id = "substring",
+		.p_variable = false,
+		.p_amount = 3,
+		.p_params = {
+			{
+				.t = stringTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+		}
+	},
+	{
+		.ret = {intTyp},
+		.id = "print",
+		.p_variable = true,
+		.p_amount = 0,
+		.p_params = {}
+	},
+	{
+		.ret = {intTyp},
+		.id = "len",
+		.p_variable = false,
+		.p_amount = 1,
+		.p_params = {
+			{
+				.t = intTyp,
+				.arr = true
+			},
+		}
+	},
+	{
+		.ret = {floatTyp},
+		.id = "pow",
+		.p_variable = false,
+		.p_amount = 2,
+		.p_params = {
+			{
+				.t = floatTyp,
+				.arr = false
+			},
+			{
+				.t = floatTyp,
+				.arr = false
+			},
+		}
+	},
 };
 
 // Global list of all functions info allocated

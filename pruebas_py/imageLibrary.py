@@ -131,3 +131,14 @@ def show_image(image):
 def show_image_cmap(image, cmap):
   plt.imshow(image, cmap=cmap)
   plt.show() 
+
+# =========================== SUBSTRING ===========================
+def substring(str, start, end):
+    length = len(str)
+    if(start < 0):
+        start = 0
+    if(end > length):
+        end = length
+    if(start > length or start > end):
+        return ""
+    return str[start:end+1]
