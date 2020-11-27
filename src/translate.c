@@ -9,7 +9,6 @@
 
 FILE * fp = NULL;
 
-static void pyhead(const char * fmt, ...);
 static void pybody(const char * fmt, ...);
 static void pybody_ind(const char * fmt, ...);
 static void add_indentation();
@@ -42,7 +41,6 @@ static void translate_stat_list(nodeType * t);
 static void translate_initializer_list(nodeType * t);
 static void translate_init_def_declarator(nodeType * t);
 static void translate_decl(nodeType * t);
-static void translate_decl_list(nodeType * t);
 static void translate_compound_stat(nodeType * t);
 static void	translate_param_decl(nodeType * t);
 static void	translate_param_decl_list(nodeType * t);
@@ -56,18 +54,10 @@ static void translate_prog(nodeType * t);
 char indent[MAX_INDENTATION_LEVEL];
 int indentLevel = 0;
 
-static void pyhead(const char * fmt, ...) {
-	// Change pointer to beggining of file
-	va_list argptr;
-	va_start(argptr, fmt);
-	int n = vfprintf(fp, fmt, argptr);
-	va_end(argptr);
-}
-
 static void pybody(const char * fmt, ...) {
 	va_list argptr;
 	va_start(argptr, fmt);
-	int n = vfprintf(fp, fmt, argptr);
+	vfprintf(fp, fmt, argptr);
 	va_end(argptr);
 }
 
@@ -77,7 +67,7 @@ static void pybody_ind(const char * fmt, ...) {
 	if (indentLevel > 0) {
 		fprintf(fp, "%s", indent);
 	}
-	int n = vfprintf(fp, fmt, argptr);
+	vfprintf(fp, fmt, argptr);
 	va_end(argptr);
 }
 
@@ -183,6 +173,8 @@ static void translate_unary_exp(nodeType * t){
 				translate_unary_exp(exp);
 				pybody(" )");
 			break;
+			default:
+				break;
 		}
   }
   else {
@@ -201,17 +193,18 @@ static void translate_mult_exp(nodeType * t) {
 
 		pybody("( ");
 		translate_mult_exp(first);
-		switch (mop->mop.op)
-		{
-		case AST:
-			pybody(" * ");
-			break;
-		case DIV:
-			pybody(" / ");
-			break;
-		case MOD:
-			pybody(" %% ");
-			break;
+		switch (mop->mop.op) {
+			case AST:
+				pybody(" * ");
+				break;
+			case DIV:
+				pybody(" / ");
+				break;
+			case MOD:
+				pybody(" %% ");
+				break;
+			default:
+				break;
 		}
 		translate_unary_exp(second);
 		pybody(" )");
@@ -233,10 +226,12 @@ static void translate_additive_exp(nodeType * t) {
 		switch(op->mop.op){
 			case PLS:
 				pybody(" + ");
-			break;
+				break;
 			case MNS:
 				pybody(" - ");
-			break;
+				break;
+			default:
+				break;
 		}
 		translate_mult_exp(second);
 		pybody(" )");		
@@ -258,10 +253,12 @@ static void translate_shift_exp(nodeType * t) {
 		switch(sym->mop.op){
 			case L_SHF:
 				pybody(" << ");
-			break;
+				break;
 			case R_SHF:
 				pybody(" >> ");
-			break;
+				break;
+			default:
+				break;
 		}
 		pybody("int( ");
 		translate_shift_exp(second);
@@ -283,20 +280,21 @@ static void translate_relational_exp(nodeType *t){
 		nodeType *rel_const = t->opr.op[1];
 		pybody("int( ");
 		translate_relational_exp(first);
-		switch (rel_const->mop.op)
-		{
-		case GE_THAN:
-			pybody(" >= ");
-			break;
-		case LE_THAN:
-			pybody(" <= ");
-			break;
-		case G_THAN:
-			pybody(" > ");
-			break;
-		case L_THAN:
-			pybody(" < ");
-			break;
+		switch (rel_const->mop.op) {
+			case GE_THAN:
+				pybody(" >= ");
+				break;
+			case LE_THAN:
+				pybody(" <= ");
+				break;
+			case G_THAN:
+				pybody(" > ");
+				break;
+			case L_THAN:
+				pybody(" < ");
+				break;
+			default:
+				break;
 		}
 		translate_relational_exp(second);
 		pybody(" )");
@@ -316,16 +314,18 @@ static void translate_equality_exp(nodeType * t) {
 		nodeType * sign = t->opr.op[1];
 		nodeType * second = t->opr.op[2];
 		pybody("int( ");
-    	translate_equality_exp(first);
-		switch(sign->mop.op){
-		case EQ:
-			pybody(" == ");
-		break;
-		case NEQ:
-			pybody(" != ");
-		break;
+		translate_equality_exp(first);
+		switch(sign->mop.op) {
+			case EQ:
+				pybody(" == ");
+				break;
+			case NEQ:
+				pybody(" != ");
+				break;
+			default:
+				break;
 		}
-    	translate_relational_exp(second);
+		translate_relational_exp(second);
 		pybody(" )");
 
 	}
@@ -498,35 +498,39 @@ static void translate_assignment_exp(nodeType * t) {
       switch(sign->mop.op){
         case INC:
           pybody(" += 1");
-        break;
+        	break;
         case DEC:
           pybody(" -= 1");
-        break;
+        	break;
+				default:
+					break;
       }
     }
     else {
       switch(sign->mop.op){
         case ASS_DIV:
           pybody(" /= ");
-        break;
+        	break;
         case ASS_ADD:
           pybody(" += ");
-        break;
+        	break;
         case ASS_MOD:
           pybody(" %%= ");
-        break;
+        	break;
         case ASS_R_SHIFT:
           pybody(" >>= ");
-        break;
+        	break;
         case ASS_L_SHIFT:
           pybody(" <<= ");
-        break;
+        	break;
         case ASS_SUB:
           pybody(" -= ");
-        break;
+        	break;
         case ASS_MLT:
           pybody(" *= ");
-        break;
+        	break;
+				default:
+					break;
       }
 
 			translate_const_exp(right_val);
@@ -655,19 +659,21 @@ static void translate_stat(nodeType * t){
 		nodeType * stat = t->opr.op[0];
 		switch(t->opr.oper) {
 			case EXP_STAT:
-					translate_exp_stat(stat);
+				translate_exp_stat(stat);
 				break;
 			case DECL_STAT:
-					translate_decl(stat);
+				translate_decl(stat);
 				break;
 			case SEL_STAT:
-					translate_selection_stat(stat);
+				translate_selection_stat(stat);
 				break;
 			case JUMP_STAT:
-					translate_jump_stat(stat);
+				translate_jump_stat(stat);
 				break;
       case ITER_STAT:
-					translate_iteration_stat(stat);
+				translate_iteration_stat(stat);
+				break;
+			default:
 				break;
 		}
 	}
@@ -694,29 +700,10 @@ static void translate_decl(nodeType * t){
 	fprintf(stderr, "FOUND decl\n");
 	
   if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
-		nodeType * type = t->opr.op[0];
 		nodeType * in = t->opr.op[1];
 		pybody_ind("");
 		translate_init_def_declarator(in);
 	}
-}
-
-static void translate_direct_declarator(nodeType * t) {
-	fprintf(stderr, "FOUND direct_declarator\n");
-
-	if(t->type == typeOpr && t->opr.oper == DIR_DECL && t->opr.nops == 2) {
-		nodeType * id = t->opr.op[0];
-		nodeType * p = t->opr.op[1];
-
-		pybody("%s", id->ide.i);
-
-		if (p != NULL) {
-			pybody("[");
-			translate_const_exp(p);
-			pybody("]");
-		}
-	}
-
 }
 
 static void translate_initializer_list(nodeType * t) {
@@ -849,7 +836,6 @@ static void translate_program_unit(nodeType * t){
 		nodeType * prog_unit = t->opr.op[1];
 		if(header->type == typeStr) {
 			// #include                                                                  "   myArchivoDePython.py"
-			int len = strlen(header->str.s);
 			char * beg = strchr(header->str.s, '"');
 			char * last = strrchr(header->str.s, '"');
 			int realLen = (last - 1) - (beg + 1) + 1;

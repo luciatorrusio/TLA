@@ -8,6 +8,11 @@
 #include <translate.h>
 #include <hashtable.h>
 
+struct restorable_var_info {
+	struct var_info * s;
+	struct restorable_var_info * next;
+};
+
 static void init_functions_h(void);
 static void init_symbols_h(void);
 
@@ -18,6 +23,13 @@ static void add_type_to_fun(struct function_info * f, nodeType * type_qualifier)
 static void add_params_to_fun(struct function_info * f, nodeType * fun_declarator);
 static void check_libraries(nodeType * t);
 
+static void create_context();
+static void delete_current_context();
+static void add_var_to_list(struct var_info * sym);
+static void add_restorable_var_to_list(struct restorable_var_info * rest);
+static void add_symbol_to_current_context(typNodeType * type, idNodeType * id);
+static void add_symbols_func_param(nodeType * t);
+static void add_symbols_func(nodeType * t);
 static void check_types_rec(nodeType * t, bool * checked);
 static void check_types(nodeType * t, bool * checked);
 
@@ -51,7 +63,7 @@ struct function_info_basic {
 
 static struct function_info_basic native_funcs_basic[] = {
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "collage",
 		.p_variable = true,
 		.p_amount = 1,
@@ -63,7 +75,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "gray_scale_image",
 		.p_variable = false,
 		.p_amount = 1,
@@ -75,7 +87,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "image_mirror",
 		.p_variable = false,
 		.p_amount = 2,
@@ -91,7 +103,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "invert_colors",
 		.p_variable = false,
 		.p_amount = 1,
@@ -103,7 +115,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "load_image",
 		.p_variable = false,
 		.p_amount = 1,
@@ -115,7 +127,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "resize_image",
 		.p_variable = false,
 		.p_amount = 2,
@@ -131,7 +143,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = imageTyp,
+		.ret = {imageTyp},
 		.id = "rotate_image",
 		.p_variable = false,
 		.p_amount = 2,
@@ -147,7 +159,75 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = intTyp,
+		.ret = {imageTyp},
+		.id = "write_on_image",
+		.p_variable = false,
+		.p_amount = 8,
+		.p_params = {
+			{
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = stringTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = true
+			},
+			{
+				.t = stringTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = true
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+		}
+	},
+	{
+		.ret = {imageTyp},
+		.id = "crop_image",
+		.p_variable = false,
+		.p_amount = 5,
+		.p_params = {
+			{
+				.t = imageTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+			{
+				.t = intTyp,
+				.arr = false
+			},
+		}
+	},
+	{
+		.ret = {intTyp},
 		.id = "save_image",
 		.p_variable = false,
 		.p_amount = 2,
@@ -163,7 +243,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = intTyp,
+		.ret = {intTyp},
 		.id = "save_image_cmap",
 		.p_variable = false,
 		.p_amount = 3,
@@ -183,7 +263,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = intTyp,
+		.ret = {intTyp},
 		.id = "show_image",
 		.p_variable = false,
 		.p_amount = 1,
@@ -195,7 +275,7 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = intTyp,
+		.ret = {intTyp},
 		.id = "show_image_cmap",
 		.p_variable = false,
 		.p_amount = 2,
@@ -226,11 +306,10 @@ static void init_functions_h() {
 static void add_fun_to_list(struct function_info * f) {
     struct function_info * l = allocated_functions;
     f->next = l;
-    allocated_functions = f->next;
+    allocated_functions = f;
 }
 
 static void pre_load_native_functions() {
-	int ret, is_missing;
 	khiter_t k;
 
 	int cantFuncs = sizeof(native_funcs_basic)/sizeof(struct function_info_basic);
@@ -322,7 +401,6 @@ static void add_params_to_fun(struct function_info * f, nodeType * fun_declarato
 static void check_libraries(nodeType * t) {
 	if (t->type == typeOpr) {
 		if (t->opr.oper == FUNC_DEF && t->opr.nops == 4) {
-			int ret, is_missing;
 			khiter_t k;
 
 			struct function_info * f = malloc(sizeof(struct function_info));
@@ -338,8 +416,6 @@ static void check_libraries(nodeType * t) {
 
 			add_fun_to_list(f);
 
-			printf("FUNCTION ID: %s\n", f->id);
-
 			kh_set(functions_table, functions_h, f->id, f);
 		}
 		else {
@@ -354,17 +430,17 @@ static void check_libraries(nodeType * t) {
 static struct var_info * allocated_symbols = NULL;
 
 // Current symbols used
-static int * used_symbols_amounts;
-
-struct restorable_symbol {
-	struct var_info * s;
-	struct restorable_symbol * next;
+struct sym_am {
+	int amount;
+	struct sym_am * next;
 };
 
-// Symbols to be restored after current context finish
-static struct restorable_symbol * to_restore_symbols = NULL;
+static struct sym_am * used_symbols_amounts;
 
-static int * to_restore_symbols_amounts;
+// Symbols to be restored after current context finish
+static struct restorable_var_info * to_restore_symbols = NULL;
+
+static struct sym_am * to_restore_symbols_amounts;
 
 KHASH_MAP_INIT_STR(symbols_table, struct var_info *);
 
@@ -372,6 +448,159 @@ khash_t(symbols_table) * symbols_h;
 
 static void init_symbols_h() {
 	symbols_h = kh_init(symbols_table); // create a hashtable
+}
+
+static void create_context() {
+	printf("CREATE CONTEXT\n");
+	struct sym_am * a = calloc(1, sizeof(struct sym_am));
+
+	if (used_symbols_amounts != NULL) {
+		a->next = used_symbols_amounts;
+	}
+	used_symbols_amounts = a;
+	//printf("CREATED NEW USED_SYMBOLS_AMOUNT NODE\n");
+
+	struct sym_am * r = calloc(1, sizeof(struct sym_am));
+
+	if (to_restore_symbols_amounts != NULL) {
+		r->next = to_restore_symbols_amounts;
+	}
+	to_restore_symbols_amounts = r;
+	//printf("CREATED NEW TO_RESTORE_SYMBOLS_AMOUNT NODE\n");
+
+}
+
+static void delete_current_context() {
+	printf("DELETED CONTEXT\n");
+	khiter_t k;
+
+	struct sym_am * used_amount = used_symbols_amounts;
+	struct var_info * v_curr = allocated_symbols;
+	struct var_info * v_prev = v_curr;
+
+	if (used_amount != NULL) {
+		printf("USED_AMOUNT_BEFORE %d\n", used_symbols_amounts->amount);
+
+		while(used_amount->amount > 0 && v_prev != NULL) {
+			printf("DELETING\n");
+			v_curr = v_prev->next;
+			k = kh_get(symbols_table, symbols_h, v_prev->id); // get the iterator
+   		if (kh_key_present(symbols_h, k)) {  // if it is found
+				kh_del(symbols_table, symbols_h, k);  // then delete it.
+   		}
+			free(v_prev);
+			v_prev = v_curr;
+
+			(used_amount->amount)--;
+		}
+
+		used_symbols_amounts = used_symbols_amounts->next;
+		if (used_symbols_amounts == NULL) {
+			printf("USED_AMOUNT_AFTER NULL\n");
+		}
+		else {
+			printf("USED_AMOUNT_AFTER %d\n", used_symbols_amounts->amount);
+		}
+		free(used_amount);
+		//printf("DELETED NEW USED_SYMBOLS_AMOUNT NODE\n");
+	}
+
+	struct sym_am * to_restore_amount = to_restore_symbols_amounts;
+	struct restorable_var_info * r_curr = to_restore_symbols;
+	struct restorable_var_info * r_prev = r_curr;
+
+	if (to_restore_amount != NULL) {
+		printf("TO_RESTORE_AMOUNT_BEFORE %d\n", to_restore_symbols_amounts->amount);
+
+		while(to_restore_amount->amount > 0 && r_prev != NULL) {
+			r_curr = r_prev->next;
+			kh_set(symbols_table, symbols_h, r_prev->s->id, r_prev->s);
+			free(r_prev);
+			r_prev = r_curr;
+
+			(to_restore_amount->amount)--;
+		}
+
+		to_restore_symbols_amounts = to_restore_symbols_amounts->next;
+		if (to_restore_symbols_amounts == NULL) {
+			printf("TO_RESTORE_AMOUNT_AFTER NULL\n");
+		}
+		else {
+			printf("TO_RESTORE_AMOUNT_AFTER %d\n", to_restore_symbols_amounts->amount);
+		}
+		free(to_restore_amount);
+		//printf("DELETED TO_RESTORE_SYMBOLS_AMOUNT NODE\n");
+	}
+}
+
+static void add_var_to_list(struct var_info * sym) {
+	struct var_info * l = allocated_symbols;
+	sym->next = l;
+	allocated_symbols = sym;
+}
+
+static void add_restorable_var_to_list(struct restorable_var_info * rest) {
+	struct restorable_var_info * l = to_restore_symbols;
+	rest->next = l;
+	to_restore_symbols = rest;
+}
+
+static void add_symbol_to_current_context(typNodeType * type, idNodeType * id) {
+	khiter_t k;
+
+	struct var_info * new_symbol = calloc(1, sizeof(struct var_info));
+
+	strcpy(new_symbol->id, id->i);
+	new_symbol->type.t = type->t;
+	new_symbol->type.arr = type->arr;
+
+	add_var_to_list(new_symbol);
+
+	struct sym_am * used_amount = used_symbols_amounts;
+
+	if (used_amount != NULL) {
+		(used_amount->amount)++;
+		printf("CURRENT SYMBOLS AMOUNT: %d\n", used_amount->amount);
+	}
+
+	k = kh_get(symbols_table, symbols_h, new_symbol->id);
+	if (kh_key_present(symbols_h, k)) {  
+		struct var_info * to_preserve = kh_val(symbols_h, k);
+		struct restorable_var_info * rest = calloc(1, sizeof(struct restorable_var_info));
+		rest->s = to_preserve;
+		add_restorable_var_to_list(rest);
+	}
+
+	kh_set(symbols_table, symbols_h, new_symbol->id, new_symbol);
+}
+
+static void add_symbols_func_param(nodeType * t) {
+	nodeType * type_qualifier;
+	nodeType * id;
+
+	if (t->type == typeOpr && t->opr.oper == PARAM_DECL_LIST) {
+		nodeType * decl_list = t->opr.op[0];
+		nodeType * decl = t->opr.op[1];
+
+		add_symbols_func_param(decl_list);
+
+		type_qualifier = decl->opr.op[0];
+		id = decl->opr.op[1];
+	}
+	else {
+		type_qualifier = t->opr.op[0];
+		id = t->opr.op[1];
+	}
+
+	add_symbol_to_current_context(&type_qualifier->typ, &id->ide);
+
+}
+
+static void add_symbols_func(nodeType * t) {
+	if (t->opr.nops > 0) {
+		nodeType * param_decl_list = t->opr.op[0];
+		add_symbols_func_param(param_decl_list);
+	}
 }
 
 /*
@@ -485,10 +714,45 @@ static void init_symbols_h() {
 							;							
 */
 static void check_types_rec(nodeType * t, bool * checked) {
-	int ret, is_missing;
 	khiter_t k;
+	unsigned int i;
+	struct var_info * v;
+	
+	if (t != NULL && t->type == typeOpr) {
+		switch(t->opr.oper) {
+			case FUNC_DEF:
+				if (t->opr.op[3]->opr.nops > 0) {
+					printf("BUILDING FUNCTION CONTEXT\n");
+					create_context();
+					add_symbols_func(t->opr.op[2]);
 
-	if ()
+					v = kh_get_val(symbols_table, symbols_h, "x", NULL);  // first have to get ieter
+					if (v != NULL) {  // k will be equal to kh_end if key not present
+						printf("ENCONTRE LA VARIABLE %s\n", v->id);
+					} 
+					else {
+						printf("VARIABLE NO ENCONTRADA AUN\n");
+					}
+
+					check_types_rec(t->opr.op[3]->opr.op[0], checked);
+					delete_current_context();
+				}
+				break;
+			case COMP_STAT:
+				printf("BUILDING COMPOUND STAT CONTEXT\n");
+				if (t->opr.nops > 0) {
+				 	create_context();
+					check_types_rec(t->opr.op[0], checked);
+					delete_current_context();
+				}
+				break;
+			default:
+				for (i = 0; i < t->opr.nops; i++) {
+					check_types_rec(t->opr.op[i], checked);
+				}
+				break;
+		}
+	}
 }
 
 static void check_types(nodeType * t, bool * checked) {

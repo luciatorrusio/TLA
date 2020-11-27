@@ -130,4 +130,4 @@ def show_image(image):
 
 def show_image_cmap(image, cmap):
   plt.imshow(image, cmap=cmap)
-  plt.show()
+  plt.show() 
