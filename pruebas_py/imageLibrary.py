@@ -3,6 +3,7 @@ import cv2
 import imutils
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
+import sys
 
 # TODO: se pueden declarar funciones privadas?
 
@@ -81,6 +82,37 @@ def rotate_image(image, angle):
   else:
     result = imutils.rotate_bound(image, angle)
   return result
+
+# =========================== WRITE ON IMAGE ===========================
+def write_on_image(img, text, cords, font, fontScale, color, thickness, orientation):
+  org = (cords[0], cords[1])
+  available_fonts = {
+    "HERSHEY SIMPLEX": cv2.FONT_HERSHEY_SIMPLEX,
+    "HERSHEY PLAIN": cv2.FONT_HERSHEY_PLAIN,
+    "HERSHEY DUPLEX": cv2.FONT_HERSHEY_DUPLEX,
+    "HERSHEY COMPLEX": cv2.FONT_HERSHEY_COMPLEX,
+    "HERSHEY TRIPLEX": cv2.FONT_HERSHEY_TRIPLEX,
+    "HERSHEY COMPLEX SMALL": cv2.FONT_HERSHEY_COMPLEX_SMALL,
+    "HERSHEY SCRIPT SIMPLEX": cv2.FONT_HERSHEY_SCRIPT_SIMPLEX,
+    "HERSHEY SCRIPT COMPLEX": cv2.FONT_HERSHEY_SCRIPT_COMPLEX
+  }
+  try:
+    choosed_font = available_fonts[font]
+  except:
+    print("Font", font, "not found: applying HERSHEY SIMPLEX", file=sys.stderr)
+    choosed_font = available_fonts["HERSHEY SIMPLEX"]
+  
+  color_bgr = (color[0], color[1], color[2])
+
+  orient = False
+  if(orientation < 0):
+    orient = True
+
+  return cv2.putText(img, text, org, choosed_font, fontScale, color_bgr, thickness, cv2.LINE_AA, orient)
+
+# =========================== CROP IMAGE ===========================
+def crop_image(img, x1, x2, y1, y2):
+  return img[y1:y2, x1:x2]
 
 # =========================== SAVE IMAGE ===========================
 def save_image(image_path, img):
