@@ -111,6 +111,10 @@ static void translate_primary_exp(nodeType * t){
 			fprintf(stderr, "PRINTING CONSTANT\n");
 			pybody("%d", t->con.value);
 			break;
+		case typeFco: 
+			fprintf(stderr, "PRINTING FLOAT CONSTANT\n");
+			pybody("%s", t->fco.s);
+			break;
 		case typeStr: 
 			fprintf(stderr, "PRINTING STRING\n");
 			pybody("%s", t->str.s);
