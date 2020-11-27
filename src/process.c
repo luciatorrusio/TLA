@@ -30,14 +30,16 @@ static void add_restorable_var_to_list(struct restorable_var_info * rest);
 static void add_symbol_to_current_context(typNodeType * type, idNodeType * id);
 static void add_symbols_func_param(nodeType * t);
 static void add_symbols_func(nodeType * t);
-static void check_types_rec(nodeType * t, bool * checked);
-static void check_types(nodeType * t, bool * checked);
+static void assert_type(nodeType * t, typNodeType * type, bool * errored);
+static void assert_is_array(typNodeType * type, int line, bool * errored);
+static int get_symbol_type(identifierT id, typNodeType * type);
+static void check_types_rec(nodeType * t, bool * errored);
+static void check_types(nodeType * t, bool * errored);
 
 static void destroy_functions_h(void);
 static void	destroy_symbols_h(void);
 
 static void delete_allocated_functions(void);
-static void delete_allocated_symbols(void);
 
 // shorthand way to get the key from hashtable or defVal if not found
 #define kh_get_val(kname, hash, key, defVal) ({k=kh_get(kname, hash, key);(k!=kh_end(hash)?kh_val(hash,k):defVal);})
@@ -451,14 +453,12 @@ static void init_symbols_h() {
 }
 
 static void create_context() {
-	printf("CREATE CONTEXT\n");
 	struct sym_am * a = calloc(1, sizeof(struct sym_am));
 
 	if (used_symbols_amounts != NULL) {
 		a->next = used_symbols_amounts;
 	}
 	used_symbols_amounts = a;
-	//printf("CREATED NEW USED_SYMBOLS_AMOUNT NODE\n");
 
 	struct sym_am * r = calloc(1, sizeof(struct sym_am));
 
@@ -466,12 +466,10 @@ static void create_context() {
 		r->next = to_restore_symbols_amounts;
 	}
 	to_restore_symbols_amounts = r;
-	//printf("CREATED NEW TO_RESTORE_SYMBOLS_AMOUNT NODE\n");
 
 }
 
 static void delete_current_context() {
-	printf("DELETED CONTEXT\n");
 	khiter_t k;
 
 	struct sym_am * used_amount = used_symbols_amounts;
@@ -479,10 +477,8 @@ static void delete_current_context() {
 	struct var_info * v_prev = v_curr;
 
 	if (used_amount != NULL) {
-		printf("USED_AMOUNT_BEFORE %d\n", used_symbols_amounts->amount);
 
 		while(used_amount->amount > 0 && v_prev != NULL) {
-			printf("DELETING\n");
 			v_curr = v_prev->next;
 			k = kh_get(symbols_table, symbols_h, v_prev->id); // get the iterator
    		if (kh_key_present(symbols_h, k)) {  // if it is found
@@ -490,19 +486,11 @@ static void delete_current_context() {
    		}
 			free(v_prev);
 			v_prev = v_curr;
-
 			(used_amount->amount)--;
 		}
 
 		used_symbols_amounts = used_symbols_amounts->next;
-		if (used_symbols_amounts == NULL) {
-			printf("USED_AMOUNT_AFTER NULL\n");
-		}
-		else {
-			printf("USED_AMOUNT_AFTER %d\n", used_symbols_amounts->amount);
-		}
 		free(used_amount);
-		//printf("DELETED NEW USED_SYMBOLS_AMOUNT NODE\n");
 	}
 
 	struct sym_am * to_restore_amount = to_restore_symbols_amounts;
@@ -510,26 +498,17 @@ static void delete_current_context() {
 	struct restorable_var_info * r_prev = r_curr;
 
 	if (to_restore_amount != NULL) {
-		printf("TO_RESTORE_AMOUNT_BEFORE %d\n", to_restore_symbols_amounts->amount);
 
 		while(to_restore_amount->amount > 0 && r_prev != NULL) {
 			r_curr = r_prev->next;
 			kh_set(symbols_table, symbols_h, r_prev->s->id, r_prev->s);
 			free(r_prev);
 			r_prev = r_curr;
-
 			(to_restore_amount->amount)--;
 		}
 
 		to_restore_symbols_amounts = to_restore_symbols_amounts->next;
-		if (to_restore_symbols_amounts == NULL) {
-			printf("TO_RESTORE_AMOUNT_AFTER NULL\n");
-		}
-		else {
-			printf("TO_RESTORE_AMOUNT_AFTER %d\n", to_restore_symbols_amounts->amount);
-		}
 		free(to_restore_amount);
-		//printf("DELETED TO_RESTORE_SYMBOLS_AMOUNT NODE\n");
 	}
 }
 
@@ -560,7 +539,6 @@ static void add_symbol_to_current_context(typNodeType * type, idNodeType * id) {
 
 	if (used_amount != NULL) {
 		(used_amount->amount)++;
-		printf("CURRENT SYMBOLS AMOUNT: %d\n", used_amount->amount);
 	}
 
 	k = kh_get(symbols_table, symbols_h, new_symbol->id);
@@ -572,6 +550,8 @@ static void add_symbol_to_current_context(typNodeType * type, idNodeType * id) {
 	}
 
 	kh_set(symbols_table, symbols_h, new_symbol->id, new_symbol);
+
+	fprintf(stderr, "ADDED SYMBOL ID: %s\n", new_symbol->id);
 }
 
 static void add_symbols_func_param(nodeType * t) {
@@ -603,6 +583,50 @@ static void add_symbols_func(nodeType * t) {
 	}
 }
 
+static void assert_type(nodeType * t, typNodeType * type, bool * errored) {
+	char * typeName;
+
+	switch(type->t) {
+		case imageTyp:
+			typeName = "Image";
+			break;
+		case intTyp:
+			typeName = "Integer";
+			break;
+		case floatTyp:
+			typeName = "Float";
+			break;
+		case stringTyp:
+			typeName = "String";
+			break;
+	}
+
+	fprintf(stderr, "ASSERTING FOR TYPE: %s%s\n", typeName, type->arr ? "[]":"");
+
+
+	// Check every node asserting type
+}
+
+static void assert_is_array(typNodeType * type, int line, bool * errored) {
+	if (!type->arr) {
+		fprintf(stderr, "Error: Expected array (line %d)", line);
+	}
+}
+
+static int get_symbol_type(identifierT id, typNodeType * type) {
+	khiter_t k;
+
+	struct var_info * s = kh_get_val(symbols_table, symbols_h, id, NULL);
+	if (s != NULL) {
+		type->t = s->type.t;
+		type->arr = s->type.arr;
+		return 0;
+	}
+	else {
+		return 1;
+	}
+}
+
 /*
 	-- CONTEXTS --
 	function_definition			
@@ -627,7 +651,7 @@ static void add_symbols_func(nodeType * t) {
 
 	init_def_declarator				
 								: id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
-								| id '=' const_exp										{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);} // Check const_exp is of type (id Type)
+								| id '=' const_exp										{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);} 		// Check const_exp is of type (id Type)
 								; 
 	assignment_exp				
 							: const_exp														{$$ = $1;}
@@ -713,50 +737,80 @@ static void add_symbols_func(nodeType * t) {
 							|	id '(' ')'													{$$ = opr(POST_EXP, 2, ide($1), NULL);} // Check id function params match
 							;							
 */
-static void check_types_rec(nodeType * t, bool * checked) {
-	khiter_t k;
+static void check_types_rec(nodeType * t, bool * errored) {
 	unsigned int i;
-	struct var_info * v;
+	int res;
+	typNodeType type;
 	
 	if (t != NULL && t->type == typeOpr) {
 		switch(t->opr.oper) {
 			case FUNC_DEF:
 				if (t->opr.op[3]->opr.nops > 0) {
-					printf("BUILDING FUNCTION CONTEXT\n");
+					fprintf(stderr, "BUILDING FUNCTION CONTEXT\n");
 					create_context();
 					add_symbols_func(t->opr.op[2]);
-
-					v = kh_get_val(symbols_table, symbols_h, "x", NULL);  // first have to get ieter
-					if (v != NULL) {  // k will be equal to kh_end if key not present
-						printf("ENCONTRE LA VARIABLE %s\n", v->id);
-					} 
-					else {
-						printf("VARIABLE NO ENCONTRADA AUN\n");
-					}
-
-					check_types_rec(t->opr.op[3]->opr.op[0], checked);
+					check_types_rec(t->opr.op[3]->opr.op[0], errored);
 					delete_current_context();
 				}
 				break;
 			case COMP_STAT:
-				printf("BUILDING COMPOUND STAT CONTEXT\n");
+				fprintf(stderr, "BUILDING COMPOUND STAT CONTEXT\n");
 				if (t->opr.nops > 0) {
 				 	create_context();
-					check_types_rec(t->opr.op[0], checked);
+					check_types_rec(t->opr.op[0], errored);
 					delete_current_context();
+				}
+				break;
+			case DECL:
+				fprintf(stderr, "ADDING VARIABLES AND CHECKING - DECL FOUND\n");
+				add_symbol_to_current_context(&(t->opr.op[0]->typ), &(t->opr.op[1]->opr.op[0]->ide));
+				if (t->opr.op[1]->opr.op[1] != NULL) {
+					assert_type(t->opr.op[1]->opr.op[1], &(t->opr.op[0]->typ), errored);
+				}
+				break;
+			case ASS_EXP:
+				if (t->opr.op[1] == NULL) { // '='
+					fprintf(stderr, "ASSIGNMENT TO VARIABLES: %s\n", t->opr.op[0]->ide.i);
+					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
+					if (res == 0) {
+						assert_type(t->opr.op[2], &type, errored);
+					}
+				}
+				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
+
+				}
+				else { // '++' | '--'
+
+				}
+				break;
+			case ASS_EXP_A:
+				if (t->opr.op[1] == NULL) { // '='
+					fprintf(stderr, "ASSIGNMENT TO VARIABLES: %s\n", t->opr.op[0]->ide.i);
+					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
+					assert_is_array(&type, t->line, errored);
+					if (res == 0) {
+						type.arr = false;
+						assert_type(t->opr.op[2], &type, errored);
+					}
+				}
+				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
+
+				}
+				else { // '++' | '--'
+
 				}
 				break;
 			default:
 				for (i = 0; i < t->opr.nops; i++) {
-					check_types_rec(t->opr.op[i], checked);
+					check_types_rec(t->opr.op[i], errored);
 				}
 				break;
 		}
 	}
 }
 
-static void check_types(nodeType * t, bool * checked) {
-	check_types_rec(t, checked);
+static void check_types(nodeType * t, bool * errored) {
+	check_types_rec(t, errored);
 }
 
 static void destroy_functions_h(void) {
@@ -778,23 +832,11 @@ static void delete_allocated_functions(void) {
 				paramNode * n_prev = n_curr;
 
 				while (n_prev != NULL) {
-					curr = prev->next;
-					free(prev);
-					prev = curr;
+					n_curr = n_prev->next;
+					free(n_prev);
+					n_prev = n_curr;
 				}
 			}
-			free(prev);
-		}
-		prev = curr;
-	}
-}
-
-static void delete_allocated_symbols(void) {
-	struct var_info * curr = allocated_symbols;
-	struct var_info * prev = curr;
-	while (prev != NULL) {
-		curr = prev->next;
-		if (prev != NULL) {
 			free(prev);
 		}
 		prev = curr;
@@ -804,7 +846,7 @@ static void delete_allocated_symbols(void) {
 void process_tree(nodeType * root, bool * success) {
 	prefix_print(root, 0);
 
-	bool checked = true;
+	bool errored = true;
 
 	init_functions_h();
 	pre_load_native_functions();
@@ -812,9 +854,9 @@ void process_tree(nodeType * root, bool * success) {
 	check_libraries(root);
 
 	init_symbols_h();
-	check_types(root, &checked);
+	check_types(root, &errored);
 
-	if (!checked) {
+	if (!errored) {
 		*success = false;
 		fprintf(stderr, "Type Conflict\n");
 		return;
@@ -826,5 +868,4 @@ void process_tree(nodeType * root, bool * success) {
 	destroy_symbols_h();
 
 	delete_allocated_functions();
-	delete_allocated_symbols();
 }
