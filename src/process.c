@@ -366,7 +366,7 @@ static struct function_info_basic native_funcs_basic[] = {
 	},
 	{
 		.ret = {intTyp},
-		.id = "int",
+		.id = "to_int",
 		.p_variable = false,
 		.p_amount = 1,
 		.p_params = {

@@ -1,0 +1,10 @@
+int main() {
+    img im1 = load_image("pruebas_py/portada/a.jpg");
+    img im2 = load_image("pruebas_py/portada/b.jpg");
+    img im3 = load_image("pruebas_py/portada/c.jpg");
+    img im4 = load_image("pruebas_py/portada/d.jpg");
+
+    img final = collage([im3], [im2, im1, im4]);
+    show_image(final);
+    return 0;
+}

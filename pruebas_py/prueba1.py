@@ -9,5 +9,5 @@ img4 = load_image("my_img.jpg")
 
 aux = collage([img2, img3, img4], [img4, img2])
 aux = collage([aux, img])
-aux = write_on_image(aux, "tremendo colageno", [500, 600], "HERSHEY COMPLEX", 5, [255, 0, 0], 10, 1)
+aux = write_on_image(aux, "tremendo colageno", [500, 600], "HERSHEY DUPLEX", 5, [255, 0, 0], 2, 1)
 show_image(aux)
