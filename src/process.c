@@ -366,15 +366,29 @@ static struct restorable_symbol * to_restore_symbols = NULL;
 
 static int * to_restore_symbols_amounts;
 
-static void init_symbols_h() {
-	functions_h = kh_init(functions_table); // create a hashtable
-}
-
 KHASH_MAP_INIT_STR(symbols_table, struct var_info *);
 
 khash_t(symbols_table) * symbols_h;
 
+static void init_symbols_h() {
+	symbols_h = kh_init(symbols_table); // create a hashtable
+}
+
 /*
+	-- CONTEXTS --
+	function_definition			
+						: type_qualifier id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, $1, ide($2), $3, $4); }	// Add params to symbols		
+						;
+	compound_stat				
+							: '{' stat_list '}'         					{$$ = opr(COMP_STAT, 1, $2);}
+							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
+							;
+
+	-- ADD TO HASHTABLE --
+	function_definition			
+              : type_qualifier id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, $1, ide($2), $3, $4); }	// Add params to symbols		
+							;
+
 	-- CHECK ASSIGNMENT AND ADD TO HASHTABLE --
 	decl						
               : type_qualifier init_def_declarator ';'  {$$ = opr(DECL, 2, $1, $2);} // Add type_qualifier to hashtable and check init_def_declarator
