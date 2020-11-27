@@ -24,8 +24,8 @@ def concat_tile_resize(im_list_2d, interpolation=cv2.INTER_CUBIC):
     im_list_v = [hconcat_resize_min(im_list_h, interpolation=cv2.INTER_CUBIC) for im_list_h in im_list_2d]
     return vconcat_resize_min(im_list_v, interpolation=cv2.INTER_CUBIC)
 
-def collage(images_matrix):
-    return concat_tile_resize(images_matrix)
+def collage(*images_arrays):
+    return concat_tile_resize(images_arrays)
 
 # =========================== GRAY SCALE IMAGE ===========================
 def gray_scale_image(image):

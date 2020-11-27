@@ -21,20 +21,6 @@ extern void prefix_print(nodeType * t, int depth) {
 
 	switch(t->type) {
 		case typeOpr: 
-			switch(t->typ.t) {
-				case imageTyp:
-					type = "Image";
-					break;
-				case intTyp:
-					type = "Integer";
-					break;
-				case floatTyp:
-					type = "Float";
-					break;
-				case stringTyp:
-					type = "String";
-					break;
-			}
 			fprintf(stderr, "%sNode Type: Operator\n", prefIndent);
 			fprintf(stderr, "%s- Operator: %d\n", prefIndent, t->opr.oper);
 			fprintf(stderr, "%s- Number of Operators: %d\n", prefIndent, t->opr.nops);
@@ -46,6 +32,10 @@ extern void prefix_print(nodeType * t, int depth) {
 		case typeCon: 
 			fprintf(stderr, "%sNode Type: Integer Constant\n", prefIndent);
 			fprintf(stderr, "%s- Constant: %d\n", prefIndent, t->con.value);
+			break;
+		case typeFco: 
+			fprintf(stderr, "%sNode Type: Float Constant\n", prefIndent);
+			fprintf(stderr, "%s- Constant: %s\n", prefIndent, t->fco.s);
 			break;
 		case typeStr: 
 			fprintf(stderr, "%sNode Type: String\n", prefIndent);

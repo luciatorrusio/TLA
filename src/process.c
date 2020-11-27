@@ -32,6 +32,7 @@ static void add_symbols_func_param(nodeType * t);
 static void add_symbols_func(nodeType * t);
 static void assert_type(nodeType * t, typNodeType * type, bool * errored);
 static void assert_is_array(typNodeType * type, int line, bool * errored);
+static void assert_is_int(typNodeType * type, int line, bool * errored);
 static int get_symbol_type(identifierT id, typNodeType * type);
 static void check_types_rec(nodeType * t, bool * errored);
 static void check_types(nodeType * t, bool * errored);
@@ -583,6 +584,20 @@ static void add_symbols_func(nodeType * t) {
 	}
 }
 
+static void assert_type_rec(nodeType * t, typNodeType * type, bool * errored) {
+	unsigned int i;
+	
+	if (t->type == typeOpr) {
+		switch(t->opr.oper) {
+			default:
+			for (i = 0; i < t->opr.nops; i++) {
+				check_types_rec(t->opr.op[i], errored);
+			}
+			break;
+		}
+	}
+}
+
 static void assert_type(nodeType * t, typNodeType * type, bool * errored) {
 	char * typeName;
 
@@ -603,13 +618,21 @@ static void assert_type(nodeType * t, typNodeType * type, bool * errored) {
 
 	fprintf(stderr, "ASSERTING FOR TYPE: %s%s\n", typeName, type->arr ? "[]":"");
 
-
 	// Check every node asserting type
+	assert_type_rec(t, type, errored);
 }
 
 static void assert_is_array(typNodeType * type, int line, bool * errored) {
 	if (!type->arr) {
-		fprintf(stderr, "Error: Expected array (line %d)", line);
+		*errored = true;
+		fprintf(stderr, "Error: Expected array (line %d)\n", line);
+	}
+}
+
+static void assert_is_int(typNodeType * type, int line, bool * errored) {
+	if (type->t != intTyp) {
+		*errored = true;
+		fprintf(stderr, "Error: Expected int (line %d)\n", line);
 	}
 }
 
@@ -628,44 +651,6 @@ static int get_symbol_type(identifierT id, typNodeType * type) {
 }
 
 /*
-	-- CONTEXTS --
-	function_definition			
-						: type_qualifier id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, $1, ide($2), $3, $4); }	// Add params to symbols		
-						;
-	compound_stat				
-							: '{' stat_list '}'         					{$$ = opr(COMP_STAT, 1, $2);}
-							| '{' '}'														  {$$ = opr(COMP_STAT, 0);}
-							;
-
-	-- ADD TO HASHTABLE --
-	function_definition			
-              : type_qualifier id function_declarator compound_stat 	{ $$ = opr(FUNC_DEF, 4, $1, ide($2), $3, $4); }	// Add params to symbols		
-							;
-
-	-- CHECK ASSIGNMENT AND ADD TO HASHTABLE --
-	decl						
-              : type_qualifier init_def_declarator ';'  {$$ = opr(DECL, 2, $1, $2);} // Add type_qualifier to hashtable and check init_def_declarator
-							;
-
-	-- CHECK ASSIGNMENTS --
-
-	init_def_declarator				
-								: id																	{$$ = opr(INIT_DEF_DECL, 2, ide($1), NULL);}
-								| id '=' const_exp										{$$ = opr(INIT_DEF_DECL, 2, ide($1), $3);} 		// Check const_exp is of type (id Type)
-								; 
-	assignment_exp				
-							: const_exp														{$$ = $1;}
-							| id '=' const_exp										{$$ = opr(ASS_EXP, 3, ide($1), NULL, $3);} 			// Check id type is const_exp type
-							| arr_exp '=' const_exp								{$$ = opr(ASS_EXP_A, 3, $1, NULL, $3);}					// Check id type (without accounting array - dereferenced) is const_exp type
-							| id ass_eq const_exp 								{$$ = opr(ASS_EXP, 3, ide($1), mop($2), $3);}		// Check id type is int or float
-							| arr_exp ass_eq const_exp						{$$ = opr(ASS_EXP_A, 3, $1, mop($2), $3);}			// Check id type is int[] or float[]
-							| id inc_dec_const  									{$$ = opr(ASS_EXP, 3, ide($1), mop($2), NULL);} // Check id type is int or float
-							| arr_exp inc_dec_const								{$$ = opr(ASS_EXP_A, 3, $1, mop($2), NULL);} 		// Check id type is int[] or float[]
-							;
-	arr_exp
-							: id '[' conditional_exp ']' 					{$$ = opr(ARR_EXP, 2, ide($1), $3);}
-							;
-
 	-- CHECK OPERATIONS --
 
 	logical_or_exp				
@@ -728,7 +713,6 @@ static int get_symbol_type(identifierT id, typNodeType * type) {
 							: id '[' conditional_exp ']' 					{$$ = opr(ARR_EXP, 2, ide($1), $3);} // Check conditional is int
 							;
 
-
 	-- Check functions params --
 	postfix_exp					
 							: primary_exp 		          					{$$ = $1;}			
@@ -770,35 +754,122 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				break;
 			case ASS_EXP:
 				if (t->opr.op[1] == NULL) { // '='
-					fprintf(stderr, "ASSIGNMENT TO VARIABLES: %s\n", t->opr.op[0]->ide.i);
+					fprintf(stderr, "ASSIGNMENT TO VARIABLE (=): %s\n", t->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						assert_type(t->opr.op[2], &type, errored);
 					}
+					else {
+						*errored = true;
+						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->line);
+					}
 				}
 				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
-
+					fprintf(stderr, "ASSIGNMENT TO VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->ide.i);
+					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
+					if (res == 0) {
+						if (t->opr.op[1]->mop.op == ASS_R_SHIFT || t->opr.op[1]->mop.op == ASS_L_SHIFT || t->opr.op[1]->mop.op == ASS_MOD ) {
+							assert_is_int(&type, t->opr.op[0]->line, errored);
+							type.t = intTyp;
+							assert_type(t->opr.op[2], &type, errored);
+						}
+						else {
+							if (type.t == floatTyp) {
+								assert_type(t->opr.op[2], &type, errored);
+							}
+							else if (type.t == intTyp) {
+								assert_type(t->opr.op[2], &type, errored);
+							}
+							else {
+								*errored = true;
+								fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->line);
+							}
+						}
+					}
+					else {
+						*errored = true;
+						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->line);
+					}
 				}
 				else { // '++' | '--'
-
+					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
+					if (res == 0) {
+						if (type.t != floatTyp || type.t != intTyp) {
+							*errored = true;
+							fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->line);
+						}
+					}
+					else {
+						*errored = true;
+						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->line);
+					}
 				}
 				break;
 			case ASS_EXP_A:
 				if (t->opr.op[1] == NULL) { // '='
-					fprintf(stderr, "ASSIGNMENT TO VARIABLES: %s\n", t->opr.op[0]->ide.i);
-					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
-					assert_is_array(&type, t->line, errored);
+					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
+					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
+						assert_is_array(&type, t->opr.op[0]->opr.op[0]->line, errored);
 						type.arr = false;
 						assert_type(t->opr.op[2], &type, errored);
 					}
+					else {
+						*errored = true;
+						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+					}
 				}
 				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
-
+					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
+					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
+					if (res == 0) {
+						assert_is_array(&type, t->opr.op[0]->opr.op[0]->line, errored);
+						if (t->opr.op[1]->mop.op == ASS_R_SHIFT || t->opr.op[1]->mop.op == ASS_L_SHIFT || t->opr.op[1]->mop.op == ASS_MOD ) {
+							assert_is_int(&type, t->opr.op[0]->opr.op[0]->line, errored);
+							type.arr = false;
+							type.t = intTyp;
+							assert_type(t->opr.op[2], &type, errored);
+						}
+						else {
+							if (type.t == floatTyp) {
+								type.arr = false;
+								assert_type(t->opr.op[2], &type, errored);
+							}
+							else if (type.t == intTyp) {
+								type.arr = false;
+								assert_type(t->opr.op[2], &type, errored);
+							}
+							else {
+								*errored = true;
+								fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+							}
+						}
+					}
+					else {
+						*errored = true;
+						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+					}
 				}
 				else { // '++' | '--'
-
+					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (++|--): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
+					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
+					if (res == 0) {
+						assert_is_array(&type, t->opr.op[0]->opr.op[0]->line, errored);
+						if (type.t != floatTyp || type.t != intTyp) {
+							*errored = true;
+							fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+						}
+					}
+					else {
+						*errored = true;
+						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+					}
 				}
+
+				// check [ num ] is int
+				type.t = intTyp;
+				type.arr = false;
+				assert_type(t->opr.op[0]->opr.op[1], &type, errored);
 				break;
 			default:
 				for (i = 0; i < t->opr.nops; i++) {
@@ -846,7 +917,7 @@ static void delete_allocated_functions(void) {
 void process_tree(nodeType * root, bool * success) {
 	prefix_print(root, 0);
 
-	bool errored = true;
+	bool errored = false;
 
 	init_functions_h();
 	pre_load_native_functions();
@@ -856,7 +927,7 @@ void process_tree(nodeType * root, bool * success) {
 	init_symbols_h();
 	check_types(root, &errored);
 
-	if (!errored) {
+	if (errored) {
 		*success = false;
 		fprintf(stderr, "Type Conflict\n");
 		return;

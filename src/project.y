@@ -13,6 +13,7 @@
 	nodeType *opr(oper_types oper, int nops, ...);
 	nodeType *ide(identifierT iden);
 	nodeType *con(int value);
+	nodeType *fco(stringT s);
 	nodeType *typ(cTyp value, bool arr);
 	nodeType *mop(mathOp op);
 	void free_node(nodeType *p);
@@ -29,9 +30,9 @@
 
 %union {
 		stringT sArr;
-    int iValue;                 /* integer value */
-    identifierT ident;                /* symbol table index */
-    nodeType *nPtr;             /* node pointer */
+    int iValue;
+		identifierT ident;
+    nodeType *nPtr;
 		cTyp cType;
 		mathOp mOp;
 };
@@ -48,7 +49,7 @@
 
 %token <mOp> ass_eq eq_const shift_const rel_const inc_dec_const
 %token <cType> type_const
-%token <sArr> string float_const HEADER
+%token <sArr> string HEADER float_const
 %token <iValue> int_const
 %token <ident> id
 
@@ -219,7 +220,7 @@ arr_exp
 primary_exp					
 							: id 																	{$$ = ide($1);}
 							| int_const														{$$ = con($1);}
-							| float_const													{$$ = str($1);}
+							| float_const													{$$ = fco($1);}
 							| '(' conditional_exp ')'							{$$ = $2;}
 							;
 non_operable_exp
@@ -264,6 +265,20 @@ nodeType *con(int value) {
 	p->type = typeCon;
 	p->con.value = value;
 	p->line = yylineno;
+	return p;
+}
+
+nodeType *fco(stringT s) {
+	extern int yylineno;
+	nodeType *p;
+	/* allocate node */
+	if ((p = malloc(sizeof(nodeType))) == NULL)
+	yyerror("out of memory");
+	/* copy information */
+	p->parent = NULL;
+	p->type = typeFco;
+	p->line = yylineno;
+	strcpy(p->fco.s, s);
 	return p;
 }
 

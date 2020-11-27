@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-typedef enum { typeCon, typeStr, typeId, typeOpr, typeTyp, typeMop } nodeEnum;
+typedef enum { typeCon, typeFco, typeStr, typeId, typeOpr, typeTyp, typeMop } nodeEnum;
 
 typedef enum { imageTyp, intTyp, stringTyp, floatTyp } cTyp;
 
@@ -36,22 +36,22 @@ typedef struct {
     int value;
 } conNodeType;
 
-
-/* identifiers */
 typedef struct {
-    identifierT i;                      /* subscript to sym array */
+    stringT s;
+} fcoNodeType;
+
+typedef struct {
+    identifierT i;
 } idNodeType;
 
-/* operators */
 typedef struct {
-    oper_types oper;                   /* operator */
-    int nops;                   /* number of operands */
-    struct nodeTypeTag **op;	/* operands, extended at runtime */
+    oper_types oper;
+    int nops;
+    struct nodeTypeTag **op;
 } oprNodeType;
 
-/* type */
 typedef struct {
-    cTyp t;                   /* operator */
+    cTyp t;
     bool arr;
 } typNodeType;
 
@@ -61,20 +61,19 @@ typedef struct {
 
 typedef struct nodeTypeTag {
     struct nodeTypeTag * parent;
-    nodeEnum type;              /* type of node */
+    nodeEnum type;
 
     union {
         strNodeType str;
-        conNodeType con;        /* constants */
-        idNodeType ide;          /* identifiers */
-        oprNodeType opr;        /* operators */
+        conNodeType con;
+        fcoNodeType fco;
+        idNodeType ide;
+        oprNodeType opr;
         typNodeType typ;
         mathOpNodeType mop;
     };
 
     int line;
 } nodeType;
-
-extern int sym[26];
 
 #endif
