@@ -21,7 +21,7 @@ static void pre_load_native_functions();
 
 static void add_type_to_fun(struct function_info * f, nodeType * type_qualifier);
 static void add_params_to_fun(struct function_info * f, nodeType * fun_declarator);
-static void check_libraries(nodeType * t);
+static void check_libraries(nodeType * t, bool * errored);
 
 static void create_context();
 static void delete_current_context();
@@ -30,6 +30,7 @@ static void add_restorable_var_to_list(struct restorable_var_info * rest);
 static void add_symbol_to_current_context(typNodeType * type, idNodeType * id);
 static void add_symbols_func_param(nodeType * t);
 static void add_symbols_func(nodeType * t);
+static void assert_type_rec(nodeType * t, typNodeType * type, bool * errored);
 static void assert_type(nodeType * t, typNodeType * type, bool * errored);
 static void assert_is_array(typNodeType * type, int line, bool * errored);
 static void assert_is_int(typNodeType * type, int line, bool * errored);
@@ -401,7 +402,7 @@ static void add_params_to_fun(struct function_info * f, nodeType * fun_declarato
 	}
 }
 
-static void check_libraries(nodeType * t) {
+static void check_libraries(nodeType * t, bool * errored) {
 	if (t->type == typeOpr) {
 		if (t->opr.oper == FUNC_DEF && t->opr.nops == 4) {
 			khiter_t k;
@@ -419,11 +420,18 @@ static void check_libraries(nodeType * t) {
 
 			add_fun_to_list(f);
 
-			kh_set(functions_table, functions_h, f->id, f);
+			k = kh_get(functions_table, functions_h, f->id);
+   		if (kh_key_present(functions_h, k)) {
+				*errored = true;
+				fprintf(stderr, "Error: Function '%s' already exists (line %d)\n", f->id, id->line);
+			}
+			else {
+				kh_set(functions_table, functions_h, f->id, f);
+			}
 		}
 		else {
 			for(unsigned int i = 0; i < t->opr.nops; i++) {
-				check_libraries(t->opr.op[i]);
+				check_libraries(t->opr.op[i], errored);
 			}
 		}
 	}
@@ -589,11 +597,45 @@ static void assert_type_rec(nodeType * t, typNodeType * type, bool * errored) {
 	
 	if (t->type == typeOpr) {
 		switch(t->opr.oper) {
+			case CONST_EXP_C:
+				break;
+			case CONST_EXP_N:
+				break;
+			case LOG_OR_EXP:
+				break;
+			case LOG_AND_EXP:
+				break;
+			case OR_EXP:
+				break;
+			case EXCL_OR_EXP:
+				break;
+			case AND_EXP:
+				break;
+			case EQU_EXP:
+				break;
+			case REL_EXP:
+				break;
+			case SHI_EXP:
+				break;
+			case ADD_EXP:
+				break;
+			case MULT_EXP:
+				break;
+			case UNARY_EXP_OP:
+				break;
+
+			// check types and function return type
+			case POST_EXP:
+				break;
+
+			// arr
+			case NON_OP:
+				break;
 			default:
-			for (i = 0; i < t->opr.nops; i++) {
-				check_types_rec(t->opr.op[i], errored);
-			}
-			break;
+				for (i = 0; i < t->opr.nops; i++) {
+					assert_type_rec(t->opr.op[i], type, errored);
+				}
+				break;
 		}
 	}
 }
@@ -761,7 +803,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					}
 					else {
 						*errored = true;
-						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->line);
+						fprintf(stderr, "Error: Undeclared variable '%s' (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
 					}
 				}
 				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
@@ -769,7 +811,10 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						if (t->opr.op[1]->mop.op == ASS_R_SHIFT || t->opr.op[1]->mop.op == ASS_L_SHIFT || t->opr.op[1]->mop.op == ASS_MOD ) {
-							assert_is_int(&type, t->opr.op[0]->line, errored);
+							if (type.t != intTyp) {
+								*errored = true;
+								fprintf(stderr, "Error: Variable '%s' must be int (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
+							}
 							type.t = intTyp;
 							assert_type(t->opr.op[2], &type, errored);
 						}
@@ -782,13 +827,13 @@ static void check_types_rec(nodeType * t, bool * errored) {
 							}
 							else {
 								*errored = true;
-								fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->line);
+								fprintf(stderr, "Error: Variable '%s' must be int/float (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
 							}
 						}
 					}
 					else {
 						*errored = true;
-						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->line);
+						fprintf(stderr, "Error: Undeclared variable '%s' (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
 					}
 				}
 				else { // '++' | '--'
@@ -796,12 +841,12 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					if (res == 0) {
 						if (type.t != floatTyp || type.t != intTyp) {
 							*errored = true;
-							fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->line);
+							fprintf(stderr, "Error: Variable '%s' must be int/float (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
 						}
 					}
 					else {
 						*errored = true;
-						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->line);
+						fprintf(stderr, "Error: Undeclared variable '%s' (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
 					}
 				}
 				break;
@@ -816,14 +861,17 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					}
 					else {
 						*errored = true;
-						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+						fprintf(stderr, "Error: Undeclared variable '%s' (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 					}
 				}
 				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
 					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
-						assert_is_array(&type, t->opr.op[0]->opr.op[0]->line, errored);
+						if (!type.arr) {
+							*errored = true;
+							fprintf(stderr, "Error: Variable '%s' must be an array (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
+						}
 						if (t->opr.op[1]->mop.op == ASS_R_SHIFT || t->opr.op[1]->mop.op == ASS_L_SHIFT || t->opr.op[1]->mop.op == ASS_MOD ) {
 							assert_is_int(&type, t->opr.op[0]->opr.op[0]->line, errored);
 							type.arr = false;
@@ -841,28 +889,31 @@ static void check_types_rec(nodeType * t, bool * errored) {
 							}
 							else {
 								*errored = true;
-								fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+								fprintf(stderr, "Error: Variable '%s' must be int[]/float[] (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 							}
 						}
 					}
 					else {
 						*errored = true;
-						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+						fprintf(stderr, "Error: Undeclared variable '%s' (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 					}
 				}
 				else { // '++' | '--'
 					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (++|--): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
-						assert_is_array(&type, t->opr.op[0]->opr.op[0]->line, errored);
+						if (!type.arr) {
+							*errored = true;
+							fprintf(stderr, "Error: Variable '%s' must be an array (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
+						}
 						if (type.t != floatTyp || type.t != intTyp) {
 							*errored = true;
-							fprintf(stderr, "Error: Expected int/float (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+							fprintf(stderr, "Error: Variable '%s' must be int[]/float[] (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 						}
 					}
 					else {
 						*errored = true;
-						fprintf(stderr, "Error: Undeclared variable (line %d)\n", t->opr.op[0]->opr.op[0]->line);
+						fprintf(stderr, "Error: Undeclared variable '%s' (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 					}
 				}
 
@@ -922,7 +973,13 @@ void process_tree(nodeType * root, bool * success) {
 	init_functions_h();
 	pre_load_native_functions();
 
-	check_libraries(root);
+	check_libraries(root, &errored);
+
+	if (errored) {
+		*success = false;
+		fprintf(stderr, "Clashing Functions Conflict\n");
+		return;
+	}
 
 	init_symbols_h();
 	check_types(root, &errored);

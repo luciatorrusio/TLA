@@ -203,8 +203,7 @@ unary_exp
 							| unary_operator unary_exp						{$$ = opr(UNARY_EXP_OP, 2, $1, $2);}
 							;
 unary_operator				
-							: '&' 																{$$ = mop(AMP);}
-							| '-'                                 {$$ = mop(MNS);}
+							: '-'                                 {$$ = mop(MNS);}
 							| '~'                                 {$$ = mop(TIL);}
 							| '!' 				                        {$$ = mop(NEG);}
 							;

@@ -156,10 +156,6 @@ static void translate_unary_exp(nodeType * t){
     nodeType * unaryOp = t->opr.op[0];
     nodeType * exp = t->opr.op[1];
 		switch(unaryOp->mop.op){
-			case AMP:
-				pybody("&");
-				translate_unary_exp(exp);
-			break;
 			case MNS:
 				pybody("-");
 				translate_unary_exp(exp);
