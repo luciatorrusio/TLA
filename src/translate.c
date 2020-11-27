@@ -39,7 +39,7 @@ static void translate_jump_stat(nodeType * t);
 static void translate_stat(nodeType * t);
 static void translate_stat_list(nodeType * t);
 static void translate_initializer_list(nodeType * t);
-static void translate_init_def_declarator(nodeType * t);
+static void translate_init_def_declarator(nodeType * t, typNodeType * type);
 static void translate_decl(nodeType * t);
 static void translate_compound_stat(nodeType * t);
 static void	translate_param_decl(nodeType * t);
@@ -696,9 +696,10 @@ static void translate_decl(nodeType * t){
 	fprintf(stderr, "FOUND decl\n");
 	
   	if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
+		nodeType * type = t->opr.op[0];
 		nodeType * in = t->opr.op[1];
 		pybody_ind("");
-		translate_init_def_declarator(in);
+		translate_init_def_declarator(in, &type->typ);
 	}
 }
 
@@ -719,7 +720,7 @@ static void translate_initializer_list(nodeType * t) {
 	}
 }
 
-static void translate_init_def_declarator(nodeType * t){
+static void translate_init_def_declarator(nodeType * t, typNodeType * type){
 	fprintf(stderr, "FOUND init_def_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DEF_DECL && t->opr.nops == 2) {
@@ -730,6 +731,26 @@ static void translate_init_def_declarator(nodeType * t){
 			pybody("%s", id->ide.i);
 			pybody(" = ");
 			translate_const_exp(exp);
+		} else {
+			if (type->arr) {
+				pybody("%s", id->ide.i);
+				pybody(" = []");
+			}
+			else {
+				switch(type->t) {
+					case intTyp:
+					case floatTyp:
+						pybody("%s", id->ide.i);
+						pybody(" = 0");
+						break;
+					case stringTyp:
+						pybody("%s", id->ide.i);
+						pybody(" = \"\"");
+						break;
+					default:
+						break;
+				}
+			}
 		}
 
 	}
