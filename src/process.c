@@ -32,8 +32,6 @@ static void add_symbols_func_param(nodeType * t);
 static void add_symbols_func(nodeType * t);
 static void assert_type_rec(nodeType * t, typNodeType * type, bool * errored);
 static void assert_type(nodeType * t, typNodeType * type, bool * errored);
-static void assert_is_array(typNodeType * type, int line, bool * errored);
-static void assert_is_int(typNodeType * type, int line, bool * errored);
 static int get_symbol_type(identifierT id, typNodeType * type);
 static void check_types_rec(nodeType * t, bool * errored);
 static void check_types(nodeType * t, bool * errored);
@@ -664,20 +662,6 @@ static void assert_type(nodeType * t, typNodeType * type, bool * errored) {
 	assert_type_rec(t, type, errored);
 }
 
-static void assert_is_array(typNodeType * type, int line, bool * errored) {
-	if (!type->arr) {
-		*errored = true;
-		fprintf(stderr, "Error: Expected array (line %d)\n", line);
-	}
-}
-
-static void assert_is_int(typNodeType * type, int line, bool * errored) {
-	if (type->t != intTyp) {
-		*errored = true;
-		fprintf(stderr, "Error: Expected int (line %d)\n", line);
-	}
-}
-
 static int get_symbol_type(identifierT id, typNodeType * type) {
 	khiter_t k;
 
@@ -855,7 +839,10 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
-						assert_is_array(&type, t->opr.op[0]->opr.op[0]->line, errored);
+						if (!type.arr) {
+							*errored = true;
+							fprintf(stderr, "Error: Variable '%s' must be an array (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
+						}
 						type.arr = false;
 						assert_type(t->opr.op[2], &type, errored);
 					}
@@ -873,7 +860,10 @@ static void check_types_rec(nodeType * t, bool * errored) {
 							fprintf(stderr, "Error: Variable '%s' must be an array (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 						}
 						if (t->opr.op[1]->mop.op == ASS_R_SHIFT || t->opr.op[1]->mop.op == ASS_L_SHIFT || t->opr.op[1]->mop.op == ASS_MOD ) {
-							assert_is_int(&type, t->opr.op[0]->opr.op[0]->line, errored);
+							if (type.t != intTyp) {
+								*errored = true;
+								fprintf(stderr, "Error: Variable '%s' must be int[] (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
+							}
 							type.arr = false;
 							type.t = intTyp;
 							assert_type(t->opr.op[2], &type, errored);
