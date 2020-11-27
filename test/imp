@@ -1,3 +1,7 @@
-string main() {
-  return (2 + 2);
+#include "pruebas_py/imageLibrary"
+
+int main() {
+  int a = to_int(pow(2.0, 3.0));
+  print(a);
+  return 0;
 }

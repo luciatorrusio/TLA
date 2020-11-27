@@ -142,3 +142,7 @@ def substring(str, start, end):
     if(start > length or start > end):
         return ""
     return str[start:end+1]
+
+# =========================== TO INT ===========================
+def to_int(num):
+  return int(num)
