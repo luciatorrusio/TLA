@@ -1193,7 +1193,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				else { // '++' | '--'
 					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
 					if (res == 0) {
-						if (type.t != floatTyp || type.t != intTyp) {
+						if (type.t != floatTyp && type.t != intTyp) {
 							*errored = true;
 							fprintf(stderr, "Error: Variable '%s' must be int/float (line %d)\n", t->opr.op[0]->ide.i, t->opr.op[0]->line);
 						}
@@ -1266,7 +1266,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 							*errored = true;
 							fprintf(stderr, "Error: Variable '%s' must be an array (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 						}
-						if (type.t != floatTyp || type.t != intTyp) {
+						if (type.t != floatTyp && type.t != intTyp) {
 							*errored = true;
 							fprintf(stderr, "Error: Variable '%s' must be int[]/float[] (line %d)\n", t->opr.op[0]->opr.op[0]->ide.i, t->opr.op[0]->opr.op[0]->line);
 						}
