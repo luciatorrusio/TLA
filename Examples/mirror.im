@@ -1,0 +1,17 @@
+/*
+
+  "mirrorr.im" gira y espeja una imagen creando una interesante nueva imagen  a partir del collage.
+  Este programa muestra la funcionalidad de load_image(), rotate_image(), image_mirror(),
+   write_on_image() y collage().
+
+*/
+int main() {
+  img up = load_image("examples/img/mirror.jpg");
+  img down = load_image("examples/img/mirror.jpg");
+  up = rotate_image(up, 180);
+  up = image_mirror(up, "x");
+  up = collage([up], [down]);
+  show_image(up);
+  save_image("examples/img/mirror_collage.jpg", up)
+  return 0;
+}

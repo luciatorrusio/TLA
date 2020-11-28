@@ -1,0 +1,28 @@
+/*
+
+  "disorganize_image.im" recorta una imagen en 4 y luego las reordena 
+  Este programa muestra la funcionalidad de load_image(), crop_image() y collage().
+
+*/
+int main() {
+  img dog1;
+  img dog2;
+  img dog3;
+  img dog4;
+  img dog = load_image("examples/img/dog.jpg");
+  // recorto la imagen para que me quede un cuadrado
+  dog = crop_image(dog, 300, 1200, 0, 900);
+  // recorto la imagen en 4 imagenes pequenas
+  dog1 = crop_image(dog, 0, 450, 0, 450);
+  dog2 = crop_image(dog, 450, 900, 0, 450);
+  dog3 = crop_image(dog, 0, 450, 450, 900);
+  dog4 = crop_image(dog, 450, 900, 450, 900);
+  
+  // las desordeno y las uno devuelta
+  dog = collage([dog4, dog1], [dog2, dog3]);
+  
+  // muestro la imagen
+  show_image(dog);
+  save_image("examples/img/dog_crop.jpg", dog)
+  return 0;
+}

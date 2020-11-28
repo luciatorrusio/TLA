@@ -1,0 +1,18 @@
+/*
+
+  "invert_colors.im" invierte los colores de una imagen y la achica 
+  Este programa muestra la funcionalidad de load_image(), invert_colors() y resize_image().
+
+*/
+int main() {
+  // cargo la imagen
+  img dog = load_image("examples/img/dog.jpg");
+  // invierto los colores de la imagen
+  dog = invert_colors(dog);
+  // la achico un 50%
+  dog = resize_image(dog,50);
+  
+  // muestro la imagen
+  show_image(dog);
+  return 0;
+}

@@ -1,0 +1,38 @@
+/*
+
+  "before_after.im" modifica una imagen  y luego muestra una comparacion entre esta y la 
+  original.
+  Este programa muestra la funcionalidad de load_image(), rotate_image(), gray_scale_image(),
+  save_image(), write_on_image() y collage().
+
+*/
+int main() {
+  // Carga de imagenes
+  img orig = load_image("examples/img/befor_after.jpg");
+  img im = load_image("examples/img/befor_after.jpg");
+
+  // rotacion de imagen "im" 180 grados
+  im = rotate_image(im, 180);
+
+  // Se pasa la imagen im a una escala de grises
+  im = gray_scale_image(im);
+
+  // Se guarda la imagen im ya que es mas facil de utilizar una vez guardada
+  save_image_cmap("examples/img/befor_after_gray.jpg", im, "gray");
+
+  // Se carga nuevamente la imagen
+  im = load_image("examples/img/befor_after_gray.jpg");
+  int[] cords= [300,20];
+  int[] color= [59, 173, 57];
+
+  // Se le escribe "IMAGE MANIPULATOR" en las coordenadas dadas
+  im =write_on_image(im, "IMAGE MANIPULATOR", cords,"HERSHEY SIMPLEX", 20,color , 2, -1);
+  img[] coll = [orig, im];
+
+  // se crea un collage manteniendo la original a la izquierda y la modificad a la derecha
+  im = collage(coll);
+
+  // Se muestra el collage "before_after"
+  show_image(im);
+  return 0;
+}
