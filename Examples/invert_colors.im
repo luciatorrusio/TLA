@@ -10,7 +10,7 @@ int main() {
   // invierto los colores de la imagen
   dog = invert_colors(dog);
   // la achico un 50%
-  dog = resize_image(dog,50);
+  dog = resize_image(dog, 0.5);
   
   // muestro la imagen
   show_image(dog);

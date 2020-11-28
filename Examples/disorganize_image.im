@@ -23,6 +23,6 @@ int main() {
   
   // muestro la imagen
   show_image(dog);
-  save_image("examples/img/dog_crop.jpg", dog)
+  save_image("examples/img/dog_crop.jpg", dog);
   return 0;
 }
