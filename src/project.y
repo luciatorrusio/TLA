@@ -354,8 +354,15 @@ void free_node(nodeType *p) {
 	free (p);
 }
 
-int main()
-{
+int main(int argc, char ** argv) {
+		char * output_file_name;
+		if (argc <= 1) {
+			output_file_name = "out";
+		}
+		else {
+			output_file_name = argv[1];
+		}
+
     yyparse();
 
 		if (!success) {
@@ -363,12 +370,12 @@ int main()
 			return -1;
 		}
 
-		process_tree(root, "out", &success);
+		process_tree(root, output_file_name, &success);
 
 		free_node(root);
 
     if(success)
-    	fprintf(stderr, "Compiled successfully. Output file: 'out'\n");
+    	fprintf(stderr, "Compiled successfully. Output file: '%s'\n", output_file_name);
 
     return 0;
 }
