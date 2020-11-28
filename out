@@ -2,8 +2,14 @@ import numpy as np
 from standardLibrary import collage, gray_scale_image, image_mirror, invert_colors, load_image, resize_image, rotate_image, write_on_image, crop_image, save_image, save_image_cmap, show_image, show_image_cmap, substring, to_int, defaultlist
 
 def main():
-	a = to_int(pow(2.0, 3.0))
-	print(a)
+	im1 = load_image("Examples/portada/a.jpg")
+	im2 = load_image("Examples/portada/b.jpg")
+	im3 = load_image("Examples/portada/c.jpg")
+	im4 = load_image("Examples/portada/d.jpg")
+	aux = collage([im3], [im2, im1, im4])
+	aux = write_on_image(aux, "Image Manipulator", [180, 50], "HERSHEY TRIPLEX", 2, [0, 0, 0], 3, 1)
+	final = write_on_image(aux, "TLA 2020 - 2do C.", [200, 480], "HERSHEY TRIPLEX", 2, [0, 0, 0], 3, 1)
+	save_image("Examples/portada/portada.jpg", final)
 	return 0
 
 main()
