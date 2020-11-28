@@ -867,7 +867,7 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 						*errored = true;
 						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[floatTyp], t->line);
 					}
-					else if (t->opr.op[1]->mop.op == MOD && typ != intTyp) {
+					else if (t->opr.op[1]->mop.op == MOD && typ != intTyp && typ != floatTyp) {
 						*errored = true;
 						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
 					}
