@@ -17,7 +17,7 @@ $(OUT): $(DEPS)
 	bison -b $(TGT_CONTEXT)/y -v -dy $(SRC_CONTEXT)/project.y
 	gcc -o $@ $(TGT_CONTEXT)/y.tab.c -I $(INCLUDE) $(SRC_CONTEXT)/process.c $(SRC_CONTEXT)/translate.c $(SRC_CONTEXT)/tree_printing.c $(TGT_CONTEXT)/lex.yy.c $(GCC_FLAGS)
 
-compile_code: $(OUT) $(TEST_OUT)
+compile: $(OUT) $(TEST_OUT)
 	./$(OUT) < $(TEST_OUT)
 
 all: $(OUT)
