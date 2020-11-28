@@ -363,12 +363,12 @@ int main()
 			return -1;
 		}
 
-		process_tree(root, "out.im", &success);
+		process_tree(root, "out", &success);
 
 		free_node(root);
 
     if(success)
-    	fprintf(stderr, "Compiled successfully. Output file: 'out.im'\n");
+    	fprintf(stderr, "Compiled successfully. Output file: 'out'\n");
 
     return 0;
 }
