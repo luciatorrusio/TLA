@@ -5,8 +5,6 @@ import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import sys
 
-# TODO: se pueden declarar funciones privadas?
-
 # =========================== COLLAGE ===========================
 def vconcat_resize_min(im_list, interpolation=cv2.INTER_CUBIC):
     w_min = min(im.shape[1] for im in im_list)
