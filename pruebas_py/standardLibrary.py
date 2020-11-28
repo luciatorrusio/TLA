@@ -146,3 +146,24 @@ def substring(str, start, end):
 # =========================== TO INT ===========================
 def to_int(num):
   return int(num)
+
+# =========================== DEFAULT LIST ===========================
+class defaultlist(list):
+
+    def __init__(self,defData):
+        self.defData = defData
+
+    def _getDefault(self):
+        if isinstance(self.defData,type):
+            return self.defData()
+        return self.defData
+
+    def __getitem__(self,index):
+        if index >= len(self):
+            return self._getDefault()
+        return super.__getitem__(index)
+
+    def __setitem__(self,index,value):
+        while index>=len(self):
+            self.append(self._getDefault())
+        list.__setitem__(self,index,value)
