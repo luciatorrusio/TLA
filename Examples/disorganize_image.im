@@ -9,7 +9,7 @@ int main() {
   img dog2;
   img dog3;
   img dog4;
-  img dog = load_image("examples/img/fiona.jpg");
+  img dog = load_image("examples/img/fiona.jpeg");
   // recorto la imagen para que me quede un cuadrado
   dog = crop_image(dog, 0, 960, 0, 960);
   // recorto la imagen en 4 imagenes pequenas
@@ -23,6 +23,6 @@ int main() {
   
   // muestro la imagen
   show_image(dog);
-  save_image("examples/img/dog_crop.jpg", dog);
+  #save_image("examples/img/dog_crop.jpg", dog);
   return 0;
 }
