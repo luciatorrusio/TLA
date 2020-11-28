@@ -851,7 +851,7 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 				case EQU_EXP:
 				case REL_EXP:
 				case SHI_EXP:
-					if (typ != intTyp) {
+					if (typ != floatTyp && typ != intTyp) {
 						*errored = true;
 						fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
 					}
@@ -882,7 +882,7 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 							}
 							break;
 						case TIL:
-							if (typ != intTyp) {
+							if (typ != floatTyp && typ != intTyp) {
 								*errored = true;
 								fprintf(stderr, "Error: Expected %s, but found %s (line %d)\n", types[typ], types[intTyp], t->line);
 							}
@@ -897,6 +897,9 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 					v = kh_get_val(symbols_table, symbols_h, t->ide.i, NULL);
 					if (v != NULL) {
 						if (!v->type.arr || v->type.t != typ) {
+							if (v->type.arr && typ == floatTyp && v->type.t == intTyp) {
+								return;
+							}
 							*errored = true;
 							fprintf(stderr, "Error: Expected %s, but found variable '%s' of type %s%s (line %d)\n", types[typ], t->ide.i, types[v->type.t], v->type.arr ? "[]":"", t->line);
 						}
