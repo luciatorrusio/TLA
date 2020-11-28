@@ -14,10 +14,10 @@ int main() {
 
   // Le escribimos encima
   write_on_image(im, "IMAGE MANIPULATOR", cords,"HERSHEY SIMPLEX", 20,color , 2, -1);
-  img[] collage = [orig, im];
+  img[] coll = [orig, im];
 
   // le agregamos la imagen original
-  collage(collage);
+  collage(coll);
   show_image(im);
   return 0;
 }

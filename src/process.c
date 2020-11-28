@@ -748,6 +748,7 @@ static void assert_return_stmts_type(nodeType * t, typNodeType * type, int * ret
 
 	if (t->type == typeOpr) {
 		if (t->opr.oper == RET) {
+			(*ret_count)++;
 			assert_type(t->opr.op[0], type, errored);
 		}
 		else {
