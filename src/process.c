@@ -611,7 +611,6 @@ static void create_context() {
 		r->next = to_restore_symbols_amounts;
 	}
 	to_restore_symbols_amounts = r;
-
 }
 
 static void delete_current_context() {
@@ -634,6 +633,8 @@ static void delete_current_context() {
 			(used_amount->amount)--;
 		}
 
+		allocated_symbols = v_prev;
+
 		used_symbols_amounts = used_symbols_amounts->next;
 		free(used_amount);
 	}
@@ -651,6 +652,8 @@ static void delete_current_context() {
 			r_prev = r_curr;
 			(to_restore_amount->amount)--;
 		}
+
+		to_restore_symbols = r_prev;
 
 		to_restore_symbols_amounts = to_restore_symbols_amounts->next;
 		free(to_restore_amount);
@@ -802,7 +805,7 @@ static void assert_variable_type(nodeType * id, typNodeType * type, bool * error
 	if (v != NULL) {
 		if (type->t != v->type.t || type->arr != v->type.arr) {
 			*errored = true;
-			fprintf(stderr, "Error: Expected %s%s, but found variable '%s' of type %s%s\n", types[type->t], type->arr ? "[]":"", id->ide.i, types[v->type.t], v->type.arr ? "[]":"");
+			fprintf(stderr, "Error: Expected %s%s, but found variable '%s' of type %s%s (line %d)\n", types[type->t], type->arr ? "[]":"", id->ide.i, types[v->type.t], v->type.arr ? "[]":"", id->line);
 		}
 	}
 	else {
@@ -1125,6 +1128,18 @@ static void check_types_rec(nodeType * t, bool * errored) {
 						*errored = true;
 						fprintf(stderr, "Error: Missing return statement at function '%s' (line %d)\n", t->opr.op[1]->ide.i, t->opr.op[1]->line);
 					}
+					check_types_rec(t->opr.op[3]->opr.op[0], errored);
+					delete_current_context();
+				}
+				break;
+			case FOR_IN_STAT:
+//				fprintf(stderr, "BUILDING FOR IN STAT CONTEXT\n");
+				if (t->opr.op[3]->opr.nops > 0) {
+					create_context();
+					add_symbol_to_current_context(&(t->opr.op[0]->typ), &(t->opr.op[1]->ide), t->opr.op[1]->line, errored);
+					type.t = t->opr.op[0]->typ.t;
+					type.arr = true;
+					assert_variable_type(t->opr.op[2], &type, errored);
 					check_types_rec(t->opr.op[3]->opr.op[0], errored);
 					delete_current_context();
 				}

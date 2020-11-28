@@ -1,3 +1,14 @@
+int perro() {
+  int k = 0;
+  return 0;
+}
+
 int main() {
-  print("Este es mi primer programa");
+  string[] arr = [2, 3, 4];
+  for(int i in arr) {
+    int a = i;
+    arr[1] = 2;
+    print(a);
+  }
+  return 0;
 }
