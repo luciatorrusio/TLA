@@ -9,17 +9,17 @@ int main() {
   img dog2;
   img dog3;
   img dog4;
-  img dog = load_image("examples/img/dog.jpg");
+  img dog = load_image("examples/img/fiona.jpg");
   // recorto la imagen para que me quede un cuadrado
-  dog = crop_image(dog, 300, 1200, 0, 900);
+  dog = crop_image(dog, 0, 960, 0, 960);
   // recorto la imagen en 4 imagenes pequenas
-  dog1 = crop_image(dog, 0, 450, 0, 450);
-  dog2 = crop_image(dog, 450, 900, 0, 450);
-  dog3 = crop_image(dog, 0, 450, 450, 900);
-  dog4 = crop_image(dog, 450, 900, 450, 900);
+  dog1 = crop_image(dog, 0, 480, 0, 480);
+  dog2 = crop_image(dog, 480, 960, 0, 480);
+  dog3 = crop_image(dog, 0, 480, 480, 960);
+  dog4 = crop_image(dog, 480, 960, 480, 960);
   
   // las desordeno y las uno devuelta
-  dog = collage([dog4, dog1], [dog2, dog3]);
+  dog = collage([dog4, dog1], [dog3, dog2]);
   
   // muestro la imagen
   show_image(dog);
