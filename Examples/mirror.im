@@ -12,6 +12,6 @@ int main() {
   up = image_mirror(up, "x");
   up = collage([up], [down]);
   show_image(up);
-  save_image("examples/img/mirror_collage.jpg", up)
+  save_image("examples/img/mirror_collage.jpg", up);
   return 0;
 }

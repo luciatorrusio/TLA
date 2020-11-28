@@ -38,16 +38,45 @@ Para compilar el código de `IM`, ejecutar el siguiente comando:
 ```bash
 make compile
 ```
-En caso de éxito, se generará un archivo llamado 'out' en la carpeta raíz que contiene el código traducido a Python; caso contrario, se mostrará en pantalla los errores de sintaxis del código.
-Para correr el programa, ejecutar la siguiente línea:
+
+Si no se modifica el parámetro `INPUT`, por defecto se utiliza `code.im`
+
+```bash
+make compile INPUT=myCode.im
+```
+
+Si no se modifica el parámetro `OUTPUT`, por defecto se utiliza `out`
+
+```bash
+make compile INPUT=myCode.im OUTPUT=MyOutFile
+```
+
+En caso de éxito, se generará un archivo llamado como el parámetro `OUTPUT` en la carpeta raíz que contiene el código traducido a Python; caso contrario, se mostrará en pantalla los errores encontrados durante la compilación del código.
+
+Para correr el programa (en caso de que `OUTPUT=out` - por defecto - ), ejecutar la siguiente línea:
+
 ```bash
 ./imma out
+```
+
+También es posible compilar y ejecutar nuestro código, pasando los mismos parámetros (`INPUT` y `OUTPUT`) con el comando:
+
+```bash
+make run
+```
+
+El mismo parámetro puede ser utilizado con `make compile`.
+
+Es importante aclarar que si se intenta compilar 2 archivos distintos (cambiando el parámetro `INPUT`), al correr `make compile` o `make run`, no se sobreescribe el archivo anterior, con lo cual si se desea reemplazar el archivo de salida, se recomienda el uso propuesto originalmente:
+
+```bash
+./target/compiler outputFile < inputFile
 ```
 
 ### Ejemplo
 Como ejemplo práctico se detallará a continuación los pasos para generar la imágen de la portada del informe.
 El código `IM` que genera dicha imágen, junto con los recursos necesarios se encuentran en el directorio `examples/portada` dentro del directorio raíz del proytecto.
-- para compilar el código, ejecutar la siguiente línea:
+- Para compilar el código, ejecutar la siguiente línea:
 ```bash
 make compile INPUT=examples/portada/portada.im
 ```
@@ -55,6 +84,12 @@ make compile INPUT=examples/portada/portada.im
 ```bash
 ./imma out
 ```
+
+Alternativamente, para compilar y ejecutar el programa, ejecutar:
+```bash
+make run INPUT=examples/portada/portada.im
+```
+
 En el directorio `examples/portada` se encontrará el archivo `portada.jpg`.
 
 ### Limpieza de archivos autogenerados
