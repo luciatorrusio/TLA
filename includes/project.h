@@ -60,7 +60,6 @@ typedef struct {
 } mathOpNodeType;
 
 typedef struct nodeTypeTag {
-    struct nodeTypeTag * parent;
     nodeEnum type;
 
     union {

@@ -242,7 +242,6 @@ nodeType *str(stringT s) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeStr;
 	p->line = yylineno;
 	strcpy(p->str.s, s);
@@ -256,7 +255,6 @@ nodeType *con(int value) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeCon;
 	p->con.value = value;
 	p->line = yylineno;
@@ -270,7 +268,6 @@ nodeType *fco(stringT s) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeFco;
 	p->line = yylineno;
 	strcpy(p->fco.s, s);
@@ -284,7 +281,6 @@ nodeType *ide(identifierT iden) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeId;
 	p->line = yylineno;
 	strcpy(p->ide.i, iden);
@@ -302,7 +298,6 @@ nodeType *opr(oper_types oper, int nops, ...) {
 	if ((p->opr.op = malloc(nops * sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeOpr;
 	p->opr.oper = oper;
 	p->opr.nops = nops;
@@ -321,7 +316,6 @@ nodeType *typ(cTyp value, bool arr) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeTyp;
 	p->typ.t = value;
 	p->typ.arr = arr;
@@ -336,7 +330,6 @@ nodeType *mop(mathOp op) {
 	if ((p = malloc(sizeof(nodeType))) == NULL)
 	yyerror("out of memory");
 	/* copy information */
-	p->parent = NULL;
 	p->type = typeMop;
 	p->mop.op = op;
 	p->line = yylineno;
