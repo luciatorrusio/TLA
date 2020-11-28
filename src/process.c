@@ -554,6 +554,11 @@ static void check_libraries(nodeType * t, bool * errored) {
 			strcpy(f->id, id->ide.i);
 			add_params_to_fun(f, fun_declarator);
 
+			if ( strcmp(f->id, "main") == 0 && (type_qualifier->typ.t != intTyp || type_qualifier->typ.arr) ) {
+				*errored = true;
+				fprintf(stderr, "Error: Function 'main' must return int (line %d)\n", id->line);
+			}
+
 			add_fun_to_list(f);
 
 			k = kh_get(functions_table, functions_h, f->id);

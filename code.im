@@ -1,14 +1,4 @@
-int perro() {
-  int k = 0;
-  return 0;
-}
-
 int main() {
-  string[] arr = [2, 3, 4];
-  for(int i in arr) {
-    int a = i;
-    arr[1] = 2;
-    print(a);
-  }
+  print("Hello World !");
   return 0;
 }
