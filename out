@@ -2,10 +2,6 @@ import numpy as np
 from standardLibrary import collage, gray_scale_image, image_mirror, invert_colors, load_image, resize_image, rotate_image, write_on_image, crop_image, save_image, save_image_cmap, show_image, show_image_cmap, substring, to_int, defaultlist
 
 def main():
-	while(1):
-		print("No dejo de imprimir !")
-		return 0
-
-	return 0
+	print("Este es mi primer programa")
 
 main()

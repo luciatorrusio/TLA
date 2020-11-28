@@ -731,7 +731,6 @@ static void translate_init_def_declarator(nodeType * t, typNodeType * type){
 			translate_const_exp(exp);
 		} else {
 			if (type->arr) {
-				pybody("%s", id->ide.i);
 				switch(type->t) {
 					case intTyp:
 					case floatTyp:

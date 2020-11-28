@@ -1,8 +1,8 @@
 // En este programa se modifica una imagen y luego se muestra su antes/despues
 int main() {
   // Cargamos la imagen
-  img orig = load_image("img/work.jpg");
-  img im = load_image("img/work.jpg");
+  img orig = load_image("examples/img/work.jpg");
+  img im = load_image("examples/img/work.jpg");
   
   // Comenzamos a modificar la imagen, la rotamos
   rotate_image(im, 180);
@@ -19,5 +19,5 @@ int main() {
   // le agregamos la imagen original
   collage(collage);
   show_image(im);
-  return 0
+  return 0;
 }

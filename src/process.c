@@ -34,10 +34,10 @@ static void create_context();
 static void delete_current_context();
 static void add_var_to_list(struct var_info * sym);
 static void add_restorable_var_to_list(struct restorable_var_info * rest);
-static void add_symbol_to_current_context(typNodeType * type, idNodeType * id);
-static void add_symbols_func_param(nodeType * t);
-static void add_symbols_func(nodeType * t);
-static void assert_return_stmts_type(nodeType * t, typNodeType * type, bool * errored);
+static void add_symbol_to_current_context(typNodeType * type, idNodeType * id, int line, bool * errored);
+static void add_symbols_func_param(nodeType * t, bool * errored);
+static void add_symbols_func(nodeType * t, bool * errored);
+static void assert_return_stmts_type(nodeType * t, typNodeType * type, int * ret_count, bool * errored);
 static void assert_type_rec(nodeType * t, cTyp typ, bool * errored);
 static void assert_type_arr(nodeType * init_list, cTyp typ, bool * errored);
 static void assert_function_returns_type(nodeType * id, typNodeType * type, bool * errored);
@@ -669,8 +669,21 @@ static void add_restorable_var_to_list(struct restorable_var_info * rest) {
 	to_restore_symbols = rest;
 }
 
-static void add_symbol_to_current_context(typNodeType * type, idNodeType * id) {
+static void add_symbol_to_current_context(typNodeType * type, idNodeType * id, int line, bool * errored) {
 	khiter_t k;
+
+	struct function_info * f = kh_get_val(functions_table, functions_h, id->i, NULL);
+	if (f != NULL || strcmp(id->i, "print") == 0) {
+		*errored = true;
+		fprintf(stderr, "Error: A function with name '%s' already exists (line %d)\n", id->i, line);
+		return;
+	}
+
+	if (strcmp(id->i, "int") == 0 || strcmp(id->i, "float") == 0 || strcmp(id->i, "img") == 0 || strcmp(id->i, "string") == 0) {
+		*errored = true;
+		fprintf(stderr, "Error: Variables can not be named type '%s' (line %d)\n", id->i, line);
+		return;
+	}
 
 	struct var_info * new_symbol = calloc(1, sizeof(struct var_info));
 
@@ -699,7 +712,7 @@ static void add_symbol_to_current_context(typNodeType * type, idNodeType * id) {
 //	fprintf(stderr, "ADDED SYMBOL ID: %s\n", new_symbol->id);
 }
 
-static void add_symbols_func_param(nodeType * t) {
+static void add_symbols_func_param(nodeType * t, bool * errored) {
 	nodeType * type_qualifier;
 	nodeType * id;
 
@@ -707,7 +720,7 @@ static void add_symbols_func_param(nodeType * t) {
 		nodeType * decl_list = t->opr.op[0];
 		nodeType * decl = t->opr.op[1];
 
-		add_symbols_func_param(decl_list);
+		add_symbols_func_param(decl_list, errored);
 
 		type_qualifier = decl->opr.op[0];
 		id = decl->opr.op[1];
@@ -717,18 +730,18 @@ static void add_symbols_func_param(nodeType * t) {
 		id = t->opr.op[1];
 	}
 
-	add_symbol_to_current_context(&type_qualifier->typ, &id->ide);
+	add_symbol_to_current_context(&type_qualifier->typ, &id->ide, id->line, errored);
 
 }
 
-static void add_symbols_func(nodeType * t) {
+static void add_symbols_func(nodeType * t, bool * errored) {
 	if (t->opr.nops > 0) {
 		nodeType * param_decl_list = t->opr.op[0];
-		add_symbols_func_param(param_decl_list);
+		add_symbols_func_param(param_decl_list, errored);
 	}
 }
 
-static void assert_return_stmts_type(nodeType * t, typNodeType * type, bool * errored) {
+static void assert_return_stmts_type(nodeType * t, typNodeType * type, int * ret_count, bool * errored) {
 	if (t == NULL) {
 		return;
 	}
@@ -739,7 +752,7 @@ static void assert_return_stmts_type(nodeType * t, typNodeType * type, bool * er
 		}
 		else {
 			for (unsigned int i = 0; i < t->opr.nops; i++) {
-				assert_return_stmts_type(t->opr.op[i], type, errored);
+				assert_return_stmts_type(t->opr.op[i], type, ret_count, errored);
 			}
 		}
 	}
@@ -1104,8 +1117,13 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				if (t->opr.op[3]->opr.nops > 0) {
 //					fprintf(stderr, "BUILDING FUNCTION CONTEXT\n");
 					create_context();
-					add_symbols_func(t->opr.op[2]);
-					assert_return_stmts_type(t->opr.op[3]->opr.op[0], &(t->opr.op[0]->typ), errored);
+					add_symbols_func(t->opr.op[2], errored);
+					int ret_count = 0;
+					assert_return_stmts_type(t->opr.op[3]->opr.op[0], &(t->opr.op[0]->typ), &ret_count, errored);
+					if (ret_count <= 0) {
+						*errored = true;
+						fprintf(stderr, "Error: Missing return statement at function '%s' (line %d)\n", t->opr.op[1]->ide.i, t->opr.op[1]->line);
+					}
 					check_types_rec(t->opr.op[3]->opr.op[0], errored);
 					delete_current_context();
 				}
@@ -1122,7 +1140,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 			// Declarators
 			case DECL:
 //				fprintf(stderr, "ADDING VARIABLES AND CHECKING - DECL FOUND\n");
-				add_symbol_to_current_context(&(t->opr.op[0]->typ), &(t->opr.op[1]->opr.op[0]->ide));
+				add_symbol_to_current_context(&(t->opr.op[0]->typ), &(t->opr.op[1]->opr.op[0]->ide), t->opr.op[1]->opr.op[0]->line, errored);
 				if (t->opr.op[1]->opr.op[1] != NULL) {
 					assert_type(t->opr.op[1]->opr.op[1], &(t->opr.op[0]->typ), errored);
 					check_types_rec(t->opr.op[1]->opr.op[1], errored);
@@ -1408,12 +1426,11 @@ extern void process_tree(nodeType * root, char * output_file_name, bool * succes
 	if (f == NULL) {
 		errored = true;
 		fprintf(stderr, "Error: Missing main function declaration\n");
-		return;
 	}
 
 	if (errored) {
 		*success = false;
-		fprintf(stderr, "Error: Clashing Functions Conflict\n");
+		fprintf(stderr, "Error Summary: Function Definitions Conflict\n");
 		return;
 	}
 
@@ -1422,7 +1439,7 @@ extern void process_tree(nodeType * root, char * output_file_name, bool * succes
 
 	if (errored) {
 		*success = false;
-		fprintf(stderr, "Error: Type Conflict\n");
+		fprintf(stderr, "Error Summary: Type Conflict\n");
 		return;
 	}
 

@@ -1,6 +1,6 @@
 int main() {
-  img orig = load_image("img/work.jpg");
-  img im = load_image("img/work.jpg");
+  img orig = load_image("examples/img/work.jpg");
+  img im = load_image("examples/img/work.jpg");
   rotate_image(im, 180);
   gray_scale_image(im);
   int[] cords= [300,20];
