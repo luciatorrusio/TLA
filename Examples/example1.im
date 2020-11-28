@@ -1,0 +1,23 @@
+// En este programa se modifica una imagen y luego se muestra su antes/despues
+int main() {
+  // Cargamos la imagen
+  img orig = load_image("img/work.jpg");
+  img im = load_image("img/work.jpg");
+  
+  // Comenzamos a modificar la imagen, la rotamos
+  rotate_image(im, 180);
+
+  // La pasamos a escala de grises
+  gray_scale_image(im);
+  int[] cords= [300,20];
+  int[] color= [59, 173, 57];
+
+  // Le escribimos encima
+  write_on_image(im, "IMAGE MANIPULATOR", cords,"HERSHEY SIMPLEX", 20,color , 2, -1);
+  img[] collage = [orig, im];
+
+  // le agregamos la imagen original
+  collage(collage);
+  show_image(im);
+  return 0
+}

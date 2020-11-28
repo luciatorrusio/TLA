@@ -1,0 +1,13 @@
+int main() {
+  img orig = load_image("img/work.jpg");
+  img im = load_image("img/work.jpg");
+  rotate_image(im, 180);
+  gray_scale_image(im);
+  int[] cords= [300,20];
+  int[] color= [59, 173, 57];
+  write_on_image(im, "IMAGE MANIPULATOR", cords,"HERSHEY SIMPLEX", 20,color , 2, -1);
+  img[] collage = [orig, im];
+  collage(collage);
+  show_image(im);
+  return 0
+}

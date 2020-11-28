@@ -73,7 +73,7 @@ static void pybody_ind(const char * fmt, ...) {
 
 static void add_indentation() {
 	if (indentLevel + 2 >= MAX_INDENTATION_LEVEL) {
-		fprintf(stderr, "too much indentation\n");
+		fprintf(stderr, "Error: Too much indentation\n");
 	}
 	indent[indentLevel++] = '\t';
 	indent[indentLevel] = '\0';
@@ -81,16 +81,16 @@ static void add_indentation() {
 
 static void del_indentation() {
 	if (indentLevel == 0) {
-		fprintf(stderr, "error, trying to undo indentation not possible\n");
+		fprintf(stderr, "Error: Trying to undo indentation not possible\n");
 	}
 	indent[--indentLevel] = '\0';
 }
 
 static void translate_argument_exp_list(nodeType * t) {
-	fprintf(stderr, "FOUND argument_exp_list\n");
+//	fprintf(stderr, "FOUND argument_exp_list\n");
 
 	if(t->type == typeOpr && t->opr.oper == ARG_EXP_LIST && t->opr.nops == 2) {
-		fprintf(stderr, "2 argumentos\n");
+//		fprintf(stderr, "2 argumentos\n");
 		nodeType * list = t->opr.op[0];
 		nodeType * terminal = t->opr.op[1];
 		translate_argument_exp_list(list);
@@ -98,33 +98,33 @@ static void translate_argument_exp_list(nodeType * t) {
 		translate_const_exp(terminal);
 	}
 	else {
-		fprintf(stderr, "0 argumentos\n");
+//		fprintf(stderr, "0 argumentos\n");
 		translate_const_exp(t);
 	}
 }
 
 static void translate_primary_exp(nodeType * t){
-	fprintf(stderr, "FOUND primary_exp\n");
+//	fprintf(stderr, "FOUND primary_exp\n");
 	
   switch(t->type) {
 		case typeCon: 
-			fprintf(stderr, "PRINTING CONSTANT\n");
+//			fprintf(stderr, "PRINTING CONSTANT\n");
 			pybody("%d", t->con.value);
 			break;
 		case typeFco: 
-			fprintf(stderr, "PRINTING FLOAT CONSTANT\n");
+//			fprintf(stderr, "PRINTING FLOAT CONSTANT\n");
 			pybody("%s", t->fco.s);
 			break;
 		case typeStr: 
-			fprintf(stderr, "PRINTING STRING\n");
+//			fprintf(stderr, "PRINTING STRING\n");
 			pybody("%s", t->str.s);
 			break;
 		case typeId: 
-			fprintf(stderr, "PRINTING IDENTIFIER\n");
+//			fprintf(stderr, "PRINTING IDENTIFIER\n");
 			pybody("%s", t->ide.i);
 			break;
 		case typeTyp: 
-			fprintf(stderr, "PRINTING TYPE\n");
+//			fprintf(stderr, "PRINTING TYPE\n");
 			pybody("%d", t->typ.t);
 			break;
 		default:
@@ -134,7 +134,7 @@ static void translate_primary_exp(nodeType * t){
 }
 
 static void translate_postfix_exp(nodeType * t) {
-	fprintf(stderr, "FOUND postfix_exp\n");
+//	fprintf(stderr, "FOUND postfix_exp\n");
 
 	if (t->type == typeOpr && t->opr.oper == POST_EXP && t->opr.nops == 2) {
 		nodeType * funName = t->opr.op[0];
@@ -155,7 +155,7 @@ static void translate_postfix_exp(nodeType * t) {
 }
 
 static void translate_unary_exp(nodeType * t){
-	fprintf(stderr, "FOUND unary_exp\n");
+//	fprintf(stderr, "FOUND unary_exp\n");
 	if(t->type == typeOpr && t->opr.oper == UNARY_EXP_OP && t->opr.nops == 2){
     nodeType * unaryOp = t->opr.op[0];
     nodeType * exp = t->opr.op[1];
@@ -184,7 +184,7 @@ static void translate_unary_exp(nodeType * t){
 }
 
 static void translate_mult_exp(nodeType * t) {
-	fprintf(stderr, "FOUND mult_exp\n");
+//	fprintf(stderr, "FOUND mult_exp\n");
 	
 	if(t->type == typeOpr && t->opr.oper == MULT_EXP && t->opr.nops == 3) {
 		nodeType * first = t->opr.op[0];
@@ -215,7 +215,7 @@ static void translate_mult_exp(nodeType * t) {
 }
 
 static void translate_additive_exp(nodeType * t) {
-	fprintf(stderr, "FOUND additive_exp\n");
+//	fprintf(stderr, "FOUND additive_exp\n");
 	
 	if( t->type == typeOpr && t->opr.oper == ADD_EXP && t->opr.nops == 3){
 		nodeType *first = t->opr.op[0];
@@ -242,7 +242,7 @@ static void translate_additive_exp(nodeType * t) {
 }
 
 static void translate_shift_exp(nodeType * t) {
-	fprintf(stderr, "FOUND shift_exp\n");
+//	fprintf(stderr, "FOUND shift_exp\n");
 
 	if( t->type == typeOpr && t->opr.oper == SHI_EXP && t->opr.nops == 3){
 		nodeType *first = t->opr.op[0];
@@ -272,7 +272,7 @@ static void translate_shift_exp(nodeType * t) {
 
 
 static void translate_relational_exp(nodeType *t){
-	fprintf(stderr, "FOUND relational_exp\n");
+//	fprintf(stderr, "FOUND relational_exp\n");
 
 	if( t->type == typeOpr && t->opr.oper == REL_EXP && t->opr.nops == 3) {
 		nodeType *first = t->opr.op[0];
@@ -304,10 +304,8 @@ static void translate_relational_exp(nodeType *t){
 	}
 }
 
-// FALTAN
-
 static void translate_equality_exp(nodeType * t) {
-	fprintf(stderr, "FOUND equality_exp\n");
+//	fprintf(stderr, "FOUND equality_exp\n");
   
 	if( t->type == typeOpr && t->opr.oper == EQU_EXP && t->opr.nops == 3) {
 		nodeType * first = t->opr.op[0];
@@ -335,7 +333,7 @@ static void translate_equality_exp(nodeType * t) {
 }
 
 static void translate_and_exp(nodeType * t) {
-	fprintf(stderr, "FOUND and_exp\n");
+//	fprintf(stderr, "FOUND and_exp\n");
 	
 	if( t->type == typeOpr && t->opr.oper == AND_EXP && t->opr.nops == 3) {
 		nodeType * first = t->opr.op[0];
@@ -353,7 +351,7 @@ static void translate_and_exp(nodeType * t) {
 }
 
 static void translate_exclusive_or_exp(nodeType * t) {
-	fprintf(stderr, "FOUND exclusive_or_exp\n");
+//	fprintf(stderr, "FOUND exclusive_or_exp\n");
   if(t->type == typeOpr && t->opr.oper == EXCL_OR_EXP && t->opr.nops == 3 ){
     nodeType * first = t->opr.op[0];
     nodeType * second = t->opr.op[2];
@@ -372,7 +370,7 @@ static void translate_exclusive_or_exp(nodeType * t) {
 
 
 static void translate_inclusive_or_exp(nodeType * t) {
-	fprintf(stderr, "FOUND inclusive_or_exp\n");
+//	fprintf(stderr, "FOUND inclusive_or_exp\n");
   if(t->type == typeOpr && t->opr.oper == OR_EXP && t->opr.nops == 3 ){
     nodeType * first = t->opr.op[0];
     nodeType * second = t->opr.op[2];
@@ -390,7 +388,7 @@ static void translate_inclusive_or_exp(nodeType * t) {
 }
 
 static void translate_logical_and_exp(nodeType * t) {
-	fprintf(stderr, "FOUND logical_and_exp\n");
+//	fprintf(stderr, "FOUND logical_and_exp\n");
 
 	if(t->type == typeOpr && t->opr.oper == LOG_AND_EXP && t->opr.nops == 3 ){
     nodeType * first = t->opr.op[0];
@@ -409,7 +407,7 @@ static void translate_logical_and_exp(nodeType * t) {
 }
 
 static void translate_logical_or_exp(nodeType * t) {
-	fprintf(stderr, "FOUND logical_or_exp\n");
+//	fprintf(stderr, "FOUND logical_or_exp\n");
 
 	if(t->type == typeOpr && t->opr.oper == LOG_OR_EXP && t->opr.nops == 3 ){
     nodeType * first = t->opr.op[0];
@@ -428,13 +426,13 @@ static void translate_logical_or_exp(nodeType * t) {
 }
 
 static void translate_conditional_exp(nodeType * t) {
-	fprintf(stderr, "FOUND conditional_exp\n");
+//	fprintf(stderr, "FOUND conditional_exp\n");
 
 	translate_logical_or_exp(t);
 }
 
 static void translate_non_operable_exp(nodeType * t) {
-	fprintf(stderr, "FOUND non_operable_exp\n");
+//	fprintf(stderr, "FOUND non_operable_exp\n");
 
 	if (t->type == typeOpr && t->opr.oper == NON_OP && t->opr.nops == 1) {
 		pybody("[");
@@ -447,7 +445,7 @@ static void translate_non_operable_exp(nodeType * t) {
 }
 
 static void translate_const_exp(nodeType * t) {
-	fprintf(stderr, "FOUND const_exp\n");
+//	fprintf(stderr, "FOUND const_exp\n");
 
 	if( t->type == typeOpr && t->opr.oper == CONST_EXP_C && t->opr.nops == 1 ) {
 		translate_conditional_exp(t->opr.op[0]);
@@ -459,7 +457,7 @@ static void translate_const_exp(nodeType * t) {
 }
 
 static void translate_arr_exp(nodeType * t) {
-	fprintf(stderr, "FOUND arr_exp\n");
+//	fprintf(stderr, "FOUND arr_exp\n");
 
 	if (t->type == typeOpr && t->opr.oper == ARR_EXP && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
@@ -473,7 +471,7 @@ static void translate_arr_exp(nodeType * t) {
 }
 
 static void translate_assignment_exp(nodeType * t) {
-	fprintf(stderr, "FOUND assignment_exp\n");
+//	fprintf(stderr, "FOUND assignment_exp\n");
 
 	if (t->type != typeOpr || t->opr.nops != 3 || !(t->opr.oper == ASS_EXP || t->opr.oper == ASS_EXP_A)) {
 		translate_const_exp(t);
@@ -539,20 +537,20 @@ static void translate_assignment_exp(nodeType * t) {
 }
 
 static void translate_exp(nodeType * t){
-	fprintf(stderr, "FOUND exp\n");
+//	fprintf(stderr, "FOUND exp\n");
 
 	translate_assignment_exp(t);
 }
 
 static void translate_exp_stat(nodeType * t) {
-	fprintf(stderr, "FOUND exp_stat\n");
+//	fprintf(stderr, "FOUND exp_stat\n");
 	
 	pybody_ind("");
 	translate_exp(t);
 }
 
 static void translate_iteration_stat(nodeType *t){
-	fprintf(stderr, "FOUND selection_stat\n");
+//	fprintf(stderr, "FOUND selection_stat\n");
   if(t->type == typeOpr && t->opr.oper == WHILE_STAT && t->opr.nops == 2) {
     nodeType * exp = t->opr.op[0];
 		nodeType * stat = t->opr.op[1];
@@ -612,7 +610,7 @@ static void translate_iteration_stat(nodeType *t){
 }
 
 static void translate_selection_stat(nodeType * t) {
-	fprintf(stderr, "FOUND selection_stat\n");
+//	fprintf(stderr, "FOUND selection_stat\n");
 
 	if(t->type == typeOpr && t->opr.oper == IF_STAT && t->opr.nops == 3) {
 		nodeType * exp = t->opr.op[0]; 
@@ -638,7 +636,7 @@ static void translate_selection_stat(nodeType * t) {
 
 
 static void translate_jump_stat(nodeType * t) {
-	fprintf(stderr, "FOUND jump_stat\n");
+//	fprintf(stderr, "FOUND jump_stat\n");
 	
   if(t->opr.oper == RET && t->opr.nops == 1){
     pybody_ind("return ");
@@ -649,7 +647,7 @@ static void translate_jump_stat(nodeType * t) {
 }
 
 static void translate_stat(nodeType * t){
-	fprintf(stderr, "FOUND stat\n");
+//	fprintf(stderr, "FOUND stat\n");
 	
   if (t->type == typeOpr && t->opr.nops == 1) {
 		nodeType * stat = t->opr.op[0];
@@ -676,24 +674,24 @@ static void translate_stat(nodeType * t){
 }
 
 static void translate_stat_list(nodeType * t){
-	fprintf(stderr, "FOUND stat_list\n");
+//	fprintf(stderr, "FOUND stat_list\n");
 	
   if (t->opr.nops == 2){
-		fprintf(stderr, "2 argumentos\n");
+//		fprintf(stderr, "2 argumentos\n");
 		nodeType * stat_list = t->opr.op[0];
 		nodeType * stat = t->opr.op[1];
     translate_stat_list(stat_list);
 		translate_stat(stat);
   } 
 	else {
-		fprintf(stderr, "0 argumentos\n");
+//		fprintf(stderr, "0 argumentos\n");
 		translate_stat(t);
 	}
 	pybody("\n");
 }
 
 static void translate_decl(nodeType * t){
-	fprintf(stderr, "FOUND decl\n");
+//	fprintf(stderr, "FOUND decl\n");
 	
   	if (t->type == typeOpr && t->opr.oper == DECL && t->opr.nops == 2) {
 		nodeType * type = t->opr.op[0];
@@ -704,10 +702,10 @@ static void translate_decl(nodeType * t){
 }
 
 static void translate_initializer_list(nodeType * t) {
-	fprintf(stderr, "FOUND initializer_list\n");
+//	fprintf(stderr, "FOUND initializer_list\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_LIST && t->opr.nops == 2){
-		fprintf(stderr, "2 argumentos\n");
+//		fprintf(stderr, "2 argumentos\n");
 		nodeType * initializer_list = t->opr.op[0];
 		nodeType * exp = t->opr.op[1];
 		translate_initializer_list(initializer_list);
@@ -715,13 +713,13 @@ static void translate_initializer_list(nodeType * t) {
 		translate_const_exp(exp);
 	}
 	else {
-		fprintf(stderr, "0 argumentos\n");
+//		fprintf(stderr, "0 argumentos\n");
 		translate_const_exp(t);
 	}
 }
 
 static void translate_init_def_declarator(nodeType * t, typNodeType * type){
-	fprintf(stderr, "FOUND init_def_declarator\n");
+//	fprintf(stderr, "FOUND init_def_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == INIT_DEF_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[0];
@@ -734,7 +732,23 @@ static void translate_init_def_declarator(nodeType * t, typNodeType * type){
 		} else {
 			if (type->arr) {
 				pybody("%s", id->ide.i);
-				pybody(" = []");
+				switch(type->t) {
+					case intTyp:
+					case floatTyp:
+						pybody("%s", id->ide.i);
+						pybody(" = defaultlist(0)");
+						break;
+					case stringTyp:
+						pybody("%s", id->ide.i);
+						pybody(" = defaultlist(\"\")");
+						break;
+					case imageTyp:
+						pybody("%s", id->ide.i);
+						pybody(" = defaultlist(np.zeros((1,1,3)))");
+						break;
+					default:
+						break;
+				}
 			}
 			else {
 				switch(type->t) {
@@ -757,7 +771,7 @@ static void translate_init_def_declarator(nodeType * t, typNodeType * type){
 }
 
 static void translate_compound_stat(nodeType * t) {
-	fprintf(stderr, "FOUND compound_stat\n");
+//	fprintf(stderr, "FOUND compound_stat\n");
 
 	if (t->type == typeOpr && t->opr.oper == COMP_STAT && t->opr.nops == 1) {
 		nodeType * stat_list = t->opr.op[0];
@@ -768,7 +782,7 @@ static void translate_compound_stat(nodeType * t) {
 }
 
 static void	translate_param_decl(nodeType * t) {
-	fprintf(stderr, "FOUND param_decl\n");
+//	fprintf(stderr, "FOUND param_decl\n");
 
   if (t->type == typeOpr && t->opr.oper == PARAM_DECL && t->opr.nops == 2) {
 		nodeType * id = t->opr.op[1];
@@ -777,10 +791,10 @@ static void	translate_param_decl(nodeType * t) {
 }
 
 static void	translate_param_decl_list(nodeType * t) {
-	fprintf(stderr, "FOUND param_decl_list\n");
+//	fprintf(stderr, "FOUND param_decl_list\n");
 
   if(t->type == typeOpr && t->opr.oper == PARAM_DECL_LIST && t->opr.nops == 2) {
-		fprintf(stderr, "2 argumentos\n");
+//		fprintf(stderr, "2 argumentos\n");
     nodeType * param_decl_list = t->opr.op[0];
 		nodeType * param_decl = t->opr.op[1];
     translate_param_decl_list(param_decl_list);
@@ -788,14 +802,14 @@ static void	translate_param_decl_list(nodeType * t) {
     translate_param_decl(param_decl);
   }
 	else {
-		fprintf(stderr, "0 argumentos\n");
+//		fprintf(stderr, "0 argumentos\n");
 		translate_param_decl(t);
 	}
 }
 
 
 static void translate_function_declarator(nodeType * t) {
-	fprintf(stderr, "FOUND function_declarator\n");
+//	fprintf(stderr, "FOUND function_declarator\n");
 
 	if (t->type == typeOpr && t->opr.oper == FUNC_DEC) {
 		pybody("(");
@@ -807,7 +821,7 @@ static void translate_function_declarator(nodeType * t) {
 }
 
 static void translate_function_definition(nodeType * t) {
-	fprintf(stderr, "FOUND function_definition\n");
+//	fprintf(stderr, "FOUND function_definition\n");
 	if (t->opr.nops == 4) {
 		nodeType * funName = t->opr.op[1];
 		nodeType * funDeclarator = t->opr.op[2];
@@ -824,7 +838,7 @@ static void translate_function_definition(nodeType * t) {
 }
 
 static void translate_external_decl(nodeType * t) {
-	fprintf(stderr, "FOUND external_decl\n");
+//	fprintf(stderr, "FOUND external_decl\n");
 
 	if (t->type == typeOpr && t->opr.op[0]->opr.oper == FUNC_DEF) {
 		translate_function_definition(t->opr.op[0]);
@@ -832,7 +846,7 @@ static void translate_external_decl(nodeType * t) {
 }
 
 static void translate_trans_unit(nodeType * t) {
-	fprintf(stderr, "FOUND translation_unit\n");
+//	fprintf(stderr, "FOUND translation_unit\n");
 	if (t->type == typeOpr && t->opr.oper == TRANS_UNIT && t->opr.nops == 2) {
 		nodeType * first = t->opr.op[0];
 		nodeType * second = t->opr.op[1];
@@ -846,29 +860,32 @@ static void translate_trans_unit(nodeType * t) {
 }
 
 static void translate_program_unit(nodeType * t){
-	fprintf(stderr, "FOUND program_unit\n");
+//	fprintf(stderr, "FOUND program_unit\n");
 
 	translate_trans_unit(t);
 }
 
  
 static void translate_prog(nodeType * t) {
-	fprintf(stderr, "FOUND program\n");
+//	fprintf(stderr, "FOUND program\n");
 
 	translate_program_unit(t);
 }
 
-extern void translate_to_python(nodeType * t){
-	fp = fopen("translated.py", "w");
+extern void translate_to_python(nodeType * t, char * output_file_name) {
+	fp = fopen(output_file_name, "w");
 	
 	if (fp == NULL) {
 			perror("fopen");
 			return;
 	}
 
-	fprintf(stderr, "Translating to Python!\n");
 	if (t->type == typeOpr && t->opr.oper == PROG) {
+		pybody("import numpy as np\n");
+		pybody("from standardLibrary import collage, gray_scale_image, image_mirror, invert_colors, load_image, resize_image, rotate_image, write_on_image, crop_image, save_image, save_image_cmap, show_image, show_image_cmap, substring, to_int, defaultlist\n\n");
+
 		translate_prog(t->opr.op[0]);
+
 		pybody("\nmain()\n");
 	}
 

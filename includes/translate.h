@@ -3,6 +3,6 @@
 
 #include <project.h>
 
-void translate_to_python(nodeType * t);
+void translate_to_python(nodeType * t, char * output_file_name);
 
 #endif

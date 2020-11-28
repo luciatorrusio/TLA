@@ -363,12 +363,12 @@ int main()
 			return -1;
 		}
 
-		process_tree(root, &success);
+		process_tree(root, "out", &success);
 
 		free_node(root);
 
     if(success)
-    	fprintf(stderr, "Parsing Successful\n");
+    	fprintf(stderr, "Compiled successfully. Output file: 'out'\n");
 
     return 0;
 }

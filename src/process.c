@@ -82,7 +82,10 @@ struct function_info_basic {
 
 static struct function_info_basic native_funcs_basic[] = {
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "collage",
 		.p_variable = true,
 		.p_amount = 1,
@@ -94,7 +97,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "gray_scale_image",
 		.p_variable = false,
 		.p_amount = 1,
@@ -106,7 +112,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "image_mirror",
 		.p_variable = false,
 		.p_amount = 2,
@@ -122,7 +131,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "invert_colors",
 		.p_variable = false,
 		.p_amount = 1,
@@ -134,7 +146,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "load_image",
 		.p_variable = false,
 		.p_amount = 1,
@@ -146,7 +161,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "resize_image",
 		.p_variable = false,
 		.p_amount = 2,
@@ -162,7 +180,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "rotate_image",
 		.p_variable = false,
 		.p_amount = 2,
@@ -178,7 +199,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "write_on_image",
 		.p_variable = false,
 		.p_amount = 8,
@@ -218,7 +242,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {imageTyp},
+		.ret = {
+			.t = imageTyp,
+			.arr = false
+		},
 		.id = "crop_image",
 		.p_variable = false,
 		.p_amount = 5,
@@ -246,7 +273,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "save_image",
 		.p_variable = false,
 		.p_amount = 2,
@@ -262,7 +292,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "save_image_cmap",
 		.p_variable = false,
 		.p_amount = 3,
@@ -282,7 +315,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "show_image",
 		.p_variable = false,
 		.p_amount = 1,
@@ -294,7 +330,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "show_image_cmap",
 		.p_variable = false,
 		.p_amount = 2,
@@ -310,7 +349,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {stringTyp},
+		.ret = {
+			.t = stringTyp,
+			.arr = false
+		},
 		.id = "substring",
 		.p_variable = false,
 		.p_amount = 3,
@@ -330,14 +372,20 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "print",
 		.p_variable = true,
 		.p_amount = 0,
 		.p_params = {}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "len",
 		.p_variable = false,
 		.p_amount = 1,
@@ -349,7 +397,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {floatTyp},
+		.ret = {
+			.t = floatTyp,
+			.arr = false
+		},
 		.id = "pow",
 		.p_variable = false,
 		.p_amount = 2,
@@ -365,7 +416,10 @@ static struct function_info_basic native_funcs_basic[] = {
 		}
 	},
 	{
-		.ret = {intTyp},
+		.ret = {
+			.t = intTyp,
+			.arr = false
+		},
 		.id = "to_int",
 		.p_variable = false,
 		.p_amount = 1,
@@ -642,7 +696,7 @@ static void add_symbol_to_current_context(typNodeType * type, idNodeType * id) {
 
 	kh_set(symbols_table, symbols_h, new_symbol->id, new_symbol);
 
-	fprintf(stderr, "ADDED SYMBOL ID: %s\n", new_symbol->id);
+//	fprintf(stderr, "ADDED SYMBOL ID: %s\n", new_symbol->id);
 }
 
 static void add_symbols_func_param(nodeType * t) {
@@ -889,7 +943,7 @@ static void assert_type_rec(nodeType * t, cTyp typ, bool * errored) {
 }
 
 static void assert_type(nodeType * t, typNodeType * type, bool * errored) {
-	fprintf(stderr, "ASSERTING FOR TYPE: %s%s\n", types[type->t], type->arr ? "[]":"");
+//	fprintf(stderr, "ASSERTING FOR TYPE: %s%s\n", types[type->t], type->arr ? "[]":"");
 
 	// Check every node asserting type
 	if (type->arr) {
@@ -962,7 +1016,7 @@ static void free_node_list(struct node_list * node_list) {
 }
 
 static void assert_function_params_variable(identifierT id, typNodeType * type, struct node_list * args, bool * errored) {
-	fprintf(stderr, "ASSERTING ARGS FROM FUNCTION: %s\n", id);
+//	fprintf(stderr, "ASSERTING ARGS FROM FUNCTION: %s\n", id);
 	
 	if(args == NULL) return;
 	
@@ -973,7 +1027,7 @@ static void assert_function_params_variable(identifierT id, typNodeType * type, 
 }
 
 static void assert_function_params(identifierT id, paramNode * fun_param, struct node_list * args, int line, bool * errored) {
-	fprintf(stderr, "ASSERTING ARGS FROM FUNCTION: %s\n", id);
+//	fprintf(stderr, "ASSERTING ARGS FROM FUNCTION: %s\n", id);
 
 	if(fun_param == NULL && args != NULL) {
 		*errored = true;
@@ -996,7 +1050,7 @@ static void assert_function_params(identifierT id, paramNode * fun_param, struct
 }
 
 static void assert_function_exists(nodeType * id, nodeType * args, bool * errored) {
-	fprintf(stderr, "ASSERTING FUNCTION '%s' EXISTS\n", id->ide.i);
+//	fprintf(stderr, "ASSERTING FUNCTION '%s' EXISTS\n", id->ide.i);
 	khiter_t k;
 
 	struct function_info * s = kh_get_val(functions_table, functions_h, id->ide.i, NULL);
@@ -1033,77 +1087,6 @@ static int get_symbol_type(identifierT id, typNodeType * type) {
 	}
 }
 
-/*
-	-- CHECK OPERATIONS --
-
-	logical_or_exp				
-							: logical_and_exp             				{$$ = $1;}
-							| logical_or_exp or_const logical_and_exp	{$$ = opr(LOG_OR_EXP, 3, $1, mop(LOG_OR), $3);} // Check inclusive_or_exp and logical_and_exp are int
-							;
-	logical_and_exp				
-								: inclusive_or_exp          					{$$ = $1;}
-								| logical_and_exp and_const inclusive_or_exp	{$$ = opr(LOG_AND_EXP, 3, $1, mop(LOG_AND), $3);} // Check logical_and_exp and inclusive_or_exp are int
-								;
-	inclusive_or_exp			
-								: exclusive_or_exp										{$$ = $1;}
-								| inclusive_or_exp '|' exclusive_or_exp	{$$ = opr(OR_EXP, 3, $1, mop(OR), $3);} // Check inclusive_or_exp and exclusive_or_exp are int
-								;
-	exclusive_or_exp			
-								: and_exp															{$$ = $1;}
-								| exclusive_or_exp '^' and_exp				{$$ = opr(EXCL_OR_EXP, 3, $1, mop(EXCL_OR), $3);} // Check exclusive_or_exp and and_exp are int
-								;
-	and_exp						
-								: equality_exp												{$$ = $1;}
-								| and_exp '&' equality_exp 						{$$ = opr(AND_EXP, 3, $1, mop(AND), $3);} // Check and_exp and equality_exp are int
-								;
-	equality_exp				
-								: relational_exp											{$$ = $1;}
-								| equality_exp eq_const relational_exp	{$$=opr(EQU_EXP, 3, $1, mop($2), $3);} // Check equality_exp and relational_exp are int/float (in case of variables) // Could be more.. but not for now
-								; 
-	relational_exp				
-								: shift_exp									            {$$ = $1;}
-								| relational_exp '<' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(L_THAN), $3 );} // Check relational_exp and shift_exp are int/float (in case of variables)
-								| relational_exp '>' shift_exp          {$$ = opr(REL_EXP, 3, $1, mop(G_THAN), $3 );} // Check relational_exp and shift_exp are int/float (in case of variables)
-								| relational_exp rel_const shift_exp    {$$ = opr(REL_EXP, 3, $1, mop($2) , $3);} // Check relational_exp and shift_exp are int/float (in case of variables)
-								;
-	shift_exp			
-								: additive_exp													{$$ = $1;}
-								| shift_exp shift_const additive_exp	{$$ = opr(SHI_EXP, 3, $1, mop($2), $3);} // Check shift_exp and additive_exp are int
-								;
-	additive_exp				
-								: mult_exp														{$$ = $1;}
-								| additive_exp '+' mult_exp           {$$ = opr(ADD_EXP, 3, $1, mop(PLS), $3);} // Check additive_exp and mult_exp are int/float (in case of variables)
-								| additive_exp '-' mult_exp           {$$ = opr(ADD_EXP, 3, $1, mop(MNS), $3);} // Check additive_exp and mult_exp are int/float (in case of variables)
-								;
-	mult_exp					
-								: unary_exp														{$$ = $1;}
-								| mult_exp '*' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(AST), $3);} // Check mult_exp and unary_exp are int/float (in case of variables)
-								| mult_exp '/' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(DIV), $3);} // Check mult_exp and unary_exp are int/float (in case of variables)
-								| mult_exp '%' unary_exp							{$$ = opr(MULT_EXP, 3, $1, mop(MOD), $3);} // Check mult_exp and unary_exp are int
-								;
-	unary_exp			
-								: postfix_exp													{$$ = $1;}
-								| unary_operator unary_exp						{$$ = opr(UNARY_EXP_OP, 2, $1, $2);}  // Check unary_exp is int
-								;
-	unary_operator				
-								: '&' 																{$$ = mop(AMP);}
-								| '-'                                 {$$ = mop(MNS);}
-								| '~'                                 {$$ = mop(TIL);}
-								| '!' 				                        {$$ = mop(NEG);}
-								;
-
-	arr_exp
-							: id '[' conditional_exp ']' 					{$$ = opr(ARR_EXP, 2, ide($1), $3);} // Check conditional is int
-							;
-
-	-- Check functions params --
-	postfix_exp					
-							: primary_exp 		          					{$$ = $1;}			
-							| arr_exp															{$$ = opr(POST_EXP, 1, $1);}
-							| id '(' argument_exp_list ')'				{$$ = opr(POST_EXP, 2, ide($1), $3);} // Check id function params match
-							|	id '(' ')'													{$$ = opr(POST_EXP, 2, ide($1), NULL);} // Check id function params match
-							;							
-*/
 static void check_types_rec(nodeType * t, bool * errored) {
 	if (t == NULL) {
 		return;
@@ -1119,7 +1102,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 			// Context creators
 			case FUNC_DEF:
 				if (t->opr.op[3]->opr.nops > 0) {
-					fprintf(stderr, "BUILDING FUNCTION CONTEXT\n");
+//					fprintf(stderr, "BUILDING FUNCTION CONTEXT\n");
 					create_context();
 					add_symbols_func(t->opr.op[2]);
 					assert_return_stmts_type(t->opr.op[3]->opr.op[0], &(t->opr.op[0]->typ), errored);
@@ -1128,7 +1111,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				}
 				break;
 			case COMP_STAT:
-				fprintf(stderr, "BUILDING COMPOUND STAT CONTEXT\n");
+//				fprintf(stderr, "BUILDING COMPOUND STAT CONTEXT\n");
 				if (t->opr.nops > 0) {
 				 	create_context();
 					check_types_rec(t->opr.op[0], errored);
@@ -1138,7 +1121,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 
 			// Declarators
 			case DECL:
-				fprintf(stderr, "ADDING VARIABLES AND CHECKING - DECL FOUND\n");
+//				fprintf(stderr, "ADDING VARIABLES AND CHECKING - DECL FOUND\n");
 				add_symbol_to_current_context(&(t->opr.op[0]->typ), &(t->opr.op[1]->opr.op[0]->ide));
 				if (t->opr.op[1]->opr.op[1] != NULL) {
 					assert_type(t->opr.op[1]->opr.op[1], &(t->opr.op[0]->typ), errored);
@@ -1149,7 +1132,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 			// Assignments
 			case ASS_EXP:
 				if (t->opr.op[1] == NULL) { // '='
-					fprintf(stderr, "ASSIGNMENT TO VARIABLE (=): %s\n", t->opr.op[0]->ide.i);
+//					fprintf(stderr, "ASSIGNMENT TO VARIABLE (=): %s\n", t->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						assert_type(t->opr.op[2], &type, errored);
@@ -1161,7 +1144,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					}
 				}
 				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
-					fprintf(stderr, "ASSIGNMENT TO VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->ide.i);
+//					fprintf(stderr, "ASSIGNMENT TO VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						if (t->opr.op[1]->mop.op == ASS_R_SHIFT || t->opr.op[1]->mop.op == ASS_L_SHIFT || t->opr.op[1]->mop.op == ASS_MOD ) {
@@ -1206,7 +1189,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				break;
 			case ASS_EXP_A:
 				if (t->opr.op[1] == NULL) { // '='
-					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
+//					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						if (!type.arr) {
@@ -1223,7 +1206,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					}
 				}
 				else if (t->opr.op[2] != NULL) { // '+=' | '-=' | '/=' | '>>=' | '<<=' | '*=' | '%='
-					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
+//					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (+=|-=|/=|>>=|<<=|*=|%%=): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						if (!type.arr) {
@@ -1259,7 +1242,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					}
 				}
 				else { // '++' | '--'
-					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (++|--): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
+//					fprintf(stderr, "ASSIGNMENT TO ARR VARIABLE (++|--): %s\n", t->opr.op[0]->opr.op[0]->ide.i);
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
 						if (!type.arr) {
@@ -1290,7 +1273,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 			case OR_EXP:
 			case EXCL_OR_EXP:
 			case AND_EXP:
-				fprintf(stderr, "CHECKING INT_EXP\n");
+//				fprintf(stderr, "CHECKING INT_EXP\n");
 				type.arr = false;
 				type.t = intTyp;
 				assert_type(t->opr.op[0], &type, errored);
@@ -1300,12 +1283,12 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				break;
 			case MULT_EXP:
 				if(t->opr.oper == MULT_EXP && (t->opr.op[1]->mop.op == DIV || t->opr.op[1]->mop.op == MOD)) {
-					fprintf(stderr, "CHECKING INT_EXP\n");
+//					fprintf(stderr, "CHECKING INT_EXP\n");
 					type.arr = false;
 					type.t = intTyp;
 				}
 				else {
-					fprintf(stderr, "CHECKING FLOAT_EXP\n");
+//					fprintf(stderr, "CHECKING FLOAT_EXP\n");
 					type.arr = false;
 					type.t = floatTyp;
 				}
@@ -1318,7 +1301,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 			case REL_EXP:
 			case SHI_EXP:
 			case ADD_EXP:
-				fprintf(stderr, "CHECKING FLOAT_EXP\n");
+//				fprintf(stderr, "CHECKING FLOAT_EXP\n");
 				type.arr = false;
 				type.t = floatTyp;
 				assert_type(t->opr.op[0], &type, errored);
@@ -1327,7 +1310,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 				check_types_rec(t->opr.op[2], errored);
 				break;
 			case UNARY_EXP_OP:
-				fprintf(stderr, "CHECKING UNARY_INT_EXP\n");
+//				fprintf(stderr, "CHECKING UNARY_INT_EXP\n");
 				type.arr = false;
 				switch(t->opr.op[1]->mop.op) {
 					case MNS:
@@ -1348,7 +1331,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 
 			// check function exist
 			case POST_EXP:
-				fprintf(stderr, "CHECKING POST_EXP\n");
+//				fprintf(stderr, "CHECKING POST_EXP\n");
 				if (t->opr.nops == 1) {
 					res = get_symbol_type(t->opr.op[0]->opr.op[0]->ide.i, &type);
 					if (res == 0) {
@@ -1359,7 +1342,7 @@ static void check_types_rec(nodeType * t, bool * errored) {
 					}
 				}
 				else {
-					fprintf(stderr, "POST_EXP --> ASSERTING FUNCTION '%s' EXISTS\n", t->opr.op[0]->ide.i);
+//					fprintf(stderr, "POST_EXP --> ASSERTING FUNCTION '%s' EXISTS\n", t->opr.op[0]->ide.i);
 					assert_function_exists(t->opr.op[0], t->opr.op[1], errored);
 					check_types_rec(t->opr.op[1], errored);
 				}
@@ -1410,8 +1393,8 @@ static void delete_allocated_functions(void) {
 	}
 }
 
-void process_tree(nodeType * root, bool * success) {
-	prefix_print(root, 0);
+extern void process_tree(nodeType * root, char * output_file_name, bool * success) {
+//	prefix_print(root, 0);
 
 	bool errored = false;
 
@@ -1420,9 +1403,17 @@ void process_tree(nodeType * root, bool * success) {
 
 	check_libraries(root, &errored);
 
+	khiter_t k;
+	struct function_info * f = kh_get_val(functions_table, functions_h, "main", NULL);
+	if (f == NULL) {
+		errored = true;
+		fprintf(stderr, "Error: Missing main function declaration\n");
+		return;
+	}
+
 	if (errored) {
 		*success = false;
-		fprintf(stderr, "Clashing Functions Conflict\n");
+		fprintf(stderr, "Error: Clashing Functions Conflict\n");
 		return;
 	}
 
@@ -1431,11 +1422,11 @@ void process_tree(nodeType * root, bool * success) {
 
 	if (errored) {
 		*success = false;
-		fprintf(stderr, "Type Conflict\n");
+		fprintf(stderr, "Error: Type Conflict\n");
 		return;
 	}
 
-	translate_to_python(root);
+	translate_to_python(root, output_file_name);
 
 	destroy_functions_h();
 	destroy_symbols_h();
