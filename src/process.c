@@ -587,12 +587,12 @@ struct sym_am {
 	struct sym_am * next;
 };
 
-static struct sym_am * used_symbols_amounts;
+static struct sym_am * used_symbols_amounts = NULL;
 
 // Symbols to be restored after current context finish
 static struct restorable_var_info * to_restore_symbols = NULL;
 
-static struct sym_am * to_restore_symbols_amounts;
+static struct sym_am * to_restore_symbols_amounts = NULL;
 
 KHASH_MAP_INIT_STR(symbols_table, struct var_info *);
 
