@@ -26,7 +26,7 @@ extern void infix_print(nodeType * t, int depth) {
 			fprintf(stderr, "%s- Number of Operators: %d\n", prefIndent, t->opr.nops);
 			for (unsigned int i = 0; i < t->opr.nops; i++) {
 				fprintf(stderr, "%s--> Operator Number %d\n", prefIndent, i);
-				prefix_print(t->opr.op[i], depth+1);
+				infix_print(t->opr.op[i], depth+1);
 			}
 			break;
 		case typeCon: 
