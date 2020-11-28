@@ -22,11 +22,11 @@ int main() {
 
   // Se carga nuevamente la imagen
   im = load_image("examples/img/befor_after_gray.jpg");
-  int[] cords= [300,20];
+  int[] cords= [50,20];
   int[] color= [59, 173, 57];
 
   // Se le escribe "IMAGE MANIPULATOR" en las coordenadas dadas
-  im =write_on_image(im, "IMAGE MANIPULATOR", cords,"HERSHEY SIMPLEX", 20,color , 2, -1);
+  im =write_on_image(im, "IMAGE MANIPULATOR", cords,"HERSHEY SIMPLEX", 2,color , 1, -1);
   img[] coll = [orig, im];
 
   // se crea un collage manteniendo la original a la izquierda y la modificad a la derecha
