@@ -1081,13 +1081,15 @@ static void assert_function_exists(nodeType * id, nodeType * args, bool * errore
 			return;
 		}
 
+		struct node_list * aux = prepare_params(args);
 		if (s->params.variable) {
 			typNodeType type;
 			type.arr = s->params.params->p.arr;
 			type.t = s->params.params->p.t;
-			assert_function_params_variable(id->ide.i, &type, prepare_params(args), errored);
+			assert_function_params_variable(id->ide.i, &type, aux, errored);
 		}
-		assert_function_params(id->ide.i, s->params.params, prepare_params(args), id->line, errored);
+		assert_function_params(id->ide.i, s->params.params, aux, id->line, errored);
+		free_node_list(aux);
 	}
 	else {
 		*errored = true;

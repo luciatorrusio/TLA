@@ -1,6 +1,5 @@
-#include "pruebas_py/imageLibrary"
-
 int main() {
-  img im = load_image("pruebas_py/image.jpg");
+  img im = load_image("examples/img/image.jpg");
   show_image(im);
+  return 0;
 }

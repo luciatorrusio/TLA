@@ -9,4 +9,5 @@ int main() {
   for(i = 0; i < 5; i++) {
     print("Esta es la variable numero:", i);
   }
+  return 0;
 }
