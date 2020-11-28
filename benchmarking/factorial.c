@@ -1,5 +1,5 @@
 #include <stdio.h>
-int factorial(int x);
+
 int factorial(int x) {
   int resp = 1;
   int i = 1;
@@ -15,7 +15,7 @@ int main() {
   int var = factorial(5 % 10);
 
   
-  printf("Resultado:%d", var);
+  printf("Resultado: %d\n", var);
 
   return 0;
 }
