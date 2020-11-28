@@ -1,0 +1,33 @@
+int is_prime(int x) {
+  if (x <= 2 || x % 2 == 0) {
+    return 0;
+  }
+
+  int div = 3;
+  
+  while (div < x && x % div != 0) {
+    div += 2;
+  }
+
+  if (div < x) {
+    return 0;
+  }
+  else {
+    return 1;
+  }
+}
+
+int main() {
+  int primes = 0;
+  int num = 2;
+
+  while(primes < 1000) {
+    if (is_prime(num)) {
+      print("(", primes, ") - ", num);
+      primes++;
+    }
+    num++;
+  }
+
+  return 0;
+}
