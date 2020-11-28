@@ -1,4 +1,4 @@
-GCC_FLAGS=-lfl -lm -g -Wall -Wno-unused-function -O3
+GCC_FLAGS=-lfl -lm -g -Wall -Wno-unused-function
 
 SRC_CONTEXT=src
 TGT_CONTEXT=target
