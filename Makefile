@@ -32,5 +32,6 @@ all: $(OUT)
 
 clean:
 	rm -rf $(TGT_CONTEXT)/*
+	rm -rf out
 
 .PHONY: all clean
