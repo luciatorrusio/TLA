@@ -72,6 +72,7 @@ Es importante aclarar que si se intenta compilar 2 archivos distintos (cambiando
 ```bash
 ./target/compiler outputFile < inputFile
 ```
+Además, es `NECESARIO` que el script que se ejecute (`outputFile` con `./imma outputFile`) se encuentre en la misma carpeta donde se encuentra la librería `standardLibrary`. De no ser así, el programa no ejecuta.
 
 ### Ejemplo
 Como ejemplo práctico se detallará a continuación los pasos para generar la imágen de la portada del informe.
