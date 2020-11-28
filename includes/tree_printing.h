@@ -3,6 +3,6 @@
 
 #include <project.h>
 
-void prefix_print(nodeType * t, int depth);
+void infix_print(nodeType * t, int depth);
 
 #endif

@@ -2,7 +2,7 @@
 #include <tree_printing.h>
 #include <project.h>
 
-extern void prefix_print(nodeType * t, int depth) {
+extern void infix_print(nodeType * t, int depth) {
 	if (t == NULL) {
 		return;
 	}
