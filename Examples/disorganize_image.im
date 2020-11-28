@@ -19,7 +19,7 @@ int main() {
   dog4 = crop_image(dog, 480, 960, 480, 960);
   
   // las desordeno y las uno devuelta
-  dog = collage([dog4, dog1], [dog2, dog3]);
+  dog = collage([dog4, dog1], [dog3, dog2]);
   
   // muestro la imagen
   show_image(dog);
